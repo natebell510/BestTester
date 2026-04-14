@@ -53,10 +53,22 @@ export class BaseAPI {
   }
 
   private async handle<T>(response: APIResponse, method: string, url: string): Promise<T> {
-    const body = await response.json() as T;
+    let body: T;
+    try {
+      body = (await response.json()) as T;
+    } catch {
+      const text = await response.text();
+      logger.info({ method, url, status: response.status(), body: text });
+      if (!response.ok()) {
+        throw new Error(`${method} ${url} failed with status ${response.status()}: ${text}`);
+      }
+      return {} as T;
+    }
     logger.info({ method, url, status: response.status(), body });
     if (!response.ok()) {
-      throw new Error(`${method} ${url} failed with status ${response.status()}: ${JSON.stringify(body)}`);
+      throw new Error(
+        `${method} ${url} failed with status ${response.status()}: ${JSON.stringify(body)}`,
+      );
     }
     return body;
   }

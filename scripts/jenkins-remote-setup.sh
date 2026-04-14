@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
-JENKINS_PW="REPLACE_WITH_JENKINS_TOKEN"
+
+# All secrets must be provided via environment variables.
+: "${JENKINS_PW:?JENKINS_PW env var is required}"
 CLI="java -jar /home/ec2-user/jenkins-cli.jar -s http://localhost:8080 -auth admin:${JENKINS_PW}"
 
 echo "=== Installing plugins ==="
@@ -34,8 +36,8 @@ pipeline {
     ADMIN_USERNAME       = 'Admin'
     ADMIN_PASSWORD       = 'admin123'
     AWS_BEDROCK_REGION   = 'us-east-1'
-    AWS_ACCESS_KEY_ID    = 'REPLACE_WITH_AWS_ACCESS_KEY_ID'
-    AWS_SECRET_ACCESS_KEY = 'REPLACE_WITH_AWS_SECRET_ACCESS_KEY'
+    AWS_ACCESS_KEY_ID    = credentials('aws-access-key-id')
+    AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
     PRIMARY_AI_MODEL     = 'amazon.nova-pro-v1:0'
     JUDGE_MODEL          = 'anthropic.claude-3-haiku-20240307-v1:0'
     JUDGE_PROVIDER       = 'bedrock'
@@ -85,8 +87,8 @@ pipeline {
     ADMIN_USERNAME        = 'Admin'
     ADMIN_PASSWORD        = 'admin123'
     AWS_BEDROCK_REGION    = 'us-east-1'
-    AWS_ACCESS_KEY_ID     = 'REPLACE_WITH_AWS_ACCESS_KEY_ID'
-    AWS_SECRET_ACCESS_KEY = 'REPLACE_WITH_AWS_SECRET_ACCESS_KEY'
+    AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')
+    AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
     PRIMARY_AI_MODEL      = 'amazon.nova-pro-v1:0'
     JUDGE_MODEL           = 'anthropic.claude-3-haiku-20240307-v1:0'
     JUDGE_PROVIDER        = 'bedrock'
@@ -123,13 +125,12 @@ cat > /var/lib/jenkins/jenkins.model.JenkinsLocationConfiguration.xml << 'XMLEOF
 <?xml version='1.1' encoding='UTF-8'?>
 <jenkins.model.JenkinsLocationConfiguration>
   <adminAddress>nobody@nowhere</adminAddress>
-  <jenkinsUrl>http://98.81.219.145:8080/</jenkinsUrl>
+  <jenkinsUrl>http://localhost:8080/</jenkinsUrl>
 </jenkins.model.JenkinsLocationConfiguration>
 XMLEOF
 chown jenkins:jenkins /var/lib/jenkins/jenkins.model.JenkinsLocationConfiguration.xml
 systemctl reload jenkins 2>/dev/null || true
 
 echo "=== Jenkins setup complete ==="
-echo "Dashboard: http://98.81.219.145:8080"
-echo "Username:  admin"
-echo "Password:  ${JENKINS_PW}"
+echo "Dashboard: Jenkins is configured. Set EC2_HOST to access remotely."
+echo "Setup complete. Credentials were injected from environment variables."

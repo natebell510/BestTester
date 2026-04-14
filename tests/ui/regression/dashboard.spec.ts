@@ -1,15 +1,14 @@
 /**
  * @file dashboard.spec.ts
  * @description Regression tests for OrangeHRM Dashboard.
- * @tags @regression
+ * @tags @ui @regression
  */
 import { test, expect } from '../../../src/fixtures/base.fixture';
 import { NAV, URLS } from '../../../src/constants';
 
-test.use({ storageState: 'auth-state/admin.json' });
+test.use({ storageState: '.auth/admin.json' });
 
-test.describe('Dashboard @regression', () => {
-
+test.describe('Dashboard @ui @regression', () => {
   test('should display dashboard heading', async ({ dashboardPage }) => {
     await dashboardPage.navigate(URLS.DASHBOARD);
     await dashboardPage.assertLoaded();

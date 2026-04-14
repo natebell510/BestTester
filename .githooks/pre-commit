@@ -1,0 +1,34 @@
+#!/bin/bash
+# Pre-commit hook: block commits that contain hardcoded secrets.
+
+PATTERNS=(
+  'AKIA[0-9A-Z]{16}'                    # AWS access key
+  'xoxb-[0-9a-zA-Z\-]+'                 # Slack bot token
+  'xoxp-[0-9a-zA-Z\-]+'                 # Slack user token
+  'xapp-[0-9a-zA-Z\-]+'                 # Slack app token
+  'ghp_[0-9a-zA-Z]{36}'                 # GitHub PAT
+  'ATATT3x[0-9a-zA-Z\+/=]+'             # Jira API token
+  'BEGIN RSA PRIVATE KEY'                # RSA private key
+  'BEGIN OPENSSH PRIVATE KEY'            # OpenSSH private key
+  'BEGIN EC PRIVATE KEY'                 # EC private key
+  'hooks\.slack\.com/services/T[A-Z0-9]' # Slack webhook URL
+)
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$STAGED" ] && exit 0
+
+FAILED=0
+for pattern in "${PATTERNS[@]}"; do
+  MATCHES=$(echo "$STAGED" | xargs grep -lPn "$pattern" 2>/dev/null | grep -v '.env.example')
+  if [ -n "$MATCHES" ]; then
+    echo "ERROR: Potential secret matching /$pattern/ found in:"
+    echo "$MATCHES"
+    FAILED=1
+  fi
+done
+
+if [ $FAILED -ne 0 ]; then
+  echo ""
+  echo "Commit blocked. Remove hardcoded secrets and use environment variables or Jenkins credentials() instead."
+  exit 1
+fi

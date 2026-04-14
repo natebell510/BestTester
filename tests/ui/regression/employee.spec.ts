@@ -1,16 +1,15 @@
 /**
  * @file employee.spec.ts
  * @description Regression tests for OrangeHRM Employee Management UI.
- * @tags @regression
+ * @tags @ui @regression
  */
 import { test, expect } from '../../../src/fixtures/base.fixture';
 import { generateEmployee } from '../../../src/utils/faker-data';
 import { URLS, MESSAGES } from '../../../src/constants';
 
-test.use({ storageState: 'auth-state/admin.json' });
+test.use({ storageState: '.auth/admin.json' });
 
-test.describe('Employee Management @regression', () => {
-
+test.describe('Employee Management @ui @regression', () => {
   test('should display employee list page', async ({ employeePage, page }) => {
     await employeePage.goto();
     await expect(page.getByRole('heading', { name: 'Employee Information' })).toBeVisible();

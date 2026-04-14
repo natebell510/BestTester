@@ -56,6 +56,13 @@ pipeline {
       description: 'Additional environment variables injected at runtime.\nFormat: one KEY=VALUE per line.\nExample:\n  FEATURE_FLAG_X=true\n  TIMEOUT_MS=30000'
     )
 
+    // ── Rebuild ──────────────────────────────────────────────────────────────
+    booleanParam(
+      name: 'REBUILD',
+      defaultValue: false,
+      description: 'Re-run tests without checkout/setup (uses existing workspace)'
+    )
+
     // ── Jira ─────────────────────────────────────────────────────────────────
     string(
       name: 'JIRA_KEY',
@@ -84,10 +91,12 @@ pipeline {
     }
 
     stage('Checkout') {
+      when { expression { !params.REBUILD } }
       steps { checkout scm }
     }
 
     stage('Setup') {
+      when { expression { !params.REBUILD } }
       steps {
         sh '''
           npm ci
