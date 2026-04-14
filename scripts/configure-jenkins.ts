@@ -15,7 +15,14 @@ const GITHUB_REPO = process.env.GITHUB_REPO ?? 'https://github.com/your-org/Best
 const KEY_FILE    = path.resolve(__dirname, '../besttester-jenkins-key.pem');
 const EC2_IP      = '98.81.219.145';
 
-// Read initial admin password via SSH using the key
+// Resolve Jenkins auth: prefer .env token (post-setup), fall back to SSH initial password (fresh install)
+function getAuthFromEnv(): { username: string; password: string } | null {
+  const u = process.env.JENKINS_USERNAME;
+  const t = process.env.JENKINS_TOKEN;
+  if (u && t) return { username: u, password: t };
+  return null;
+}
+
 async function getInitialPassword(): Promise<string> {
   const { execSync } = require('child_process');
   try {
@@ -23,7 +30,7 @@ async function getInitialPassword(): Promise<string> {
       `ssh -i "${KEY_FILE}" -o StrictHostKeyChecking=no ec2-user@${EC2_IP} "sudo cat /var/lib/jenkins/secrets/initialAdminPassword"`,
       { encoding: 'utf-8', timeout: 30_000 },
     ).trim();
-    console.log('   Initial password retrieved.');
+    console.log('   Initial password retrieved via SSH.');
     return pw;
   } catch {
     console.log('   SSH failed — trying default password file...');
@@ -31,8 +38,7 @@ async function getInitialPassword(): Promise<string> {
   }
 }
 
-async function waitForJenkins(password: string): Promise<void> {
-  const auth = { username: 'admin', password };
+async function waitForJenkins(auth: { username: string; password: string }): Promise<void> {
   for (let i = 0; i < 20; i++) {
     try {
       await axios.get(`${JENKINS_URL}/api/json`, { auth });
@@ -125,17 +131,26 @@ async function createPipelineJob(auth: { username: string; password: string }, c
     <lightweight>true</lightweight>
   </definition>
   <disabled>false</disabled>
-</flow-definition>`;
+</flow-definition>`.replace('*/main', '*/master');
 
-  await axios.post(
-    `${JENKINS_URL}/createItem?name=BestTester`,
-    jobXml,
-    { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
-  ).catch(e => {
-    if (e.response?.status === 400) console.log('   Job already exists.');
-    else throw e;
-  });
-  console.log('   Pipeline job created: BestTester');
+  try {
+    await axios.post(
+      `${JENKINS_URL}/createItem?name=BestTester`,
+      jobXml,
+      { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
+    );
+    console.log('   Pipeline job created: BestTester');
+  } catch (e: any) {
+    if (e.response?.status === 400) {
+      console.log('   Job exists — updating config...');
+      await axios.post(
+        `${JENKINS_URL}/job/BestTester/config.xml`,
+        jobXml,
+        { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
+      );
+      console.log('   Pipeline job updated: BestTester');
+    } else throw e;
+  }
 }
 
 async function createNightlyJob(auth: { username: string; password: string }, crumb: Record<string, string>): Promise<void> {
@@ -183,15 +198,24 @@ pipeline {
   <disabled>false</disabled>
 </flow-definition>`;
 
-  await axios.post(
-    `${JENKINS_URL}/createItem?name=BestTester-Nightly`,
-    jobXml,
-    { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
-  ).catch(e => {
-    if (e.response?.status === 400) console.log('   Nightly job already exists.');
-    else throw e;
-  });
-  console.log('   Nightly job created: BestTester-Nightly (cron: H 2 * * *)');
+  try {
+    await axios.post(
+      `${JENKINS_URL}/createItem?name=BestTester-Nightly`,
+      jobXml,
+      { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
+    );
+    console.log('   Nightly job created: BestTester-Nightly (cron: H 2 * * *)');
+  } catch (e: any) {
+    if (e.response?.status === 400) {
+      console.log('   Nightly job exists — updating config...');
+      await axios.post(
+        `${JENKINS_URL}/job/BestTester-Nightly/config.xml`,
+        jobXml,
+        { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
+      );
+      console.log('   Nightly job updated: BestTester-Nightly');
+    } else throw e;
+  }
 }
 
 async function createSingleTestJob(auth: { username: string; password: string }, crumb: Record<string, string>): Promise<void> {
@@ -256,31 +280,46 @@ async function createSingleTestJob(auth: { username: string; password: string },
     <lightweight>true</lightweight>
   </definition>
   <disabled>false</disabled>
-</flow-definition>`;
+</flow-definition>`.replace('*/main', '*/master');
 
-  await axios.post(
-    `${JENKINS_URL}/createItem?name=BestTester-SingleTest`,
-    jobXml,
-    { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
-  ).catch(e => {
-    if (e.response?.status === 400) console.log('   SingleTest job already exists.');
-    else throw e;
-  });
-  console.log('   Job created: BestTester-SingleTest');
+  try {
+    await axios.post(
+      `${JENKINS_URL}/createItem?name=BestTester-SingleTest`,
+      jobXml,
+      { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
+    );
+    console.log('   Job created: BestTester-SingleTest');
+  } catch (e: any) {
+    if (e.response?.status === 400) {
+      console.log('   SingleTest job exists — updating config...');
+      await axios.post(
+        `${JENKINS_URL}/job/BestTester-SingleTest/config.xml`,
+        jobXml,
+        { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
+      );
+      console.log('   SingleTest job updated: BestTester-SingleTest');
+    } else throw e;
+  }
 }
 
 async function main() {
   console.log('\n=== BestTester Jenkins Configurator ===\n');
   console.log(`Jenkins URL: ${JENKINS_URL}`);
 
-  const initialPw = await getInitialPassword();
-  if (!initialPw) {
-    console.error('Could not retrieve initial password. Ensure SSH key exists and instance is ready.');
-    process.exit(1);
+  // Try .env credentials first (already-configured Jenkins), then SSH initial password
+  let auth = getAuthFromEnv();
+  if (auth) {
+    console.log(`   Using .env credentials (${auth.username}).`);
+  } else {
+    const initialPw = await getInitialPassword();
+    if (!initialPw) {
+      console.error('No JENKINS_USERNAME/JENKINS_TOKEN in .env and SSH initial password retrieval failed.');
+      process.exit(1);
+    }
+    auth = { username: 'admin', password: initialPw };
   }
 
-  const auth = { username: 'admin', password: initialPw };
-  await waitForJenkins(initialPw);
+  await waitForJenkins(auth);
   const crumb = await getCrumb(auth);
 
   await installPlugins(auth, crumb);
@@ -300,17 +339,9 @@ async function main() {
   await createNightlyJob(auth, crumb);
   await createSingleTestJob(auth, crumb);
 
-  // Update .env with Jenkins credentials
-  const envPath = path.resolve(__dirname, '../.env');
-  let env = fs.readFileSync(envPath, 'utf-8');
-  env = env.replace(/JENKINS_USERNAME=.*/, 'JENKINS_USERNAME=admin');
-  env = env.replace(/JENKINS_TOKEN=.*/, `JENKINS_TOKEN=${initialPw}`);
-  fs.writeFileSync(envPath, env);
-
   console.log('\n✅ Jenkins configured!');
   console.log(`   Dashboard  : ${JENKINS_URL}`);
-  console.log(`   Username   : admin`);
-  console.log(`   Password   : ${initialPw}`);
+  console.log(`   Username   : ${auth.username}`);
   console.log(`   Smoke job  : ${JENKINS_URL}/job/BestTester  (cron: every 2h)`);
   console.log(`   Nightly job : ${JENKINS_URL}/job/BestTester-Nightly  (cron: 2am daily)`);
   console.log(`   Single test : ${JENKINS_URL}/job/BestTester-SingleTest\n`);
