@@ -10,6 +10,8 @@ const auth = {
   password: process.env.JENKINS_TOKEN ?? '',
 };
 
+const SLACK_WEBHOOK = process.env.SLACK_WEBHOOK_URL ?? '';
+
 const pipelineScript = `
 node {
   withEnv(['PATH=/usr/local/bin:/usr/bin:/bin']) {
@@ -33,7 +35,9 @@ node {
       archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
     }
     stage('Slack Notify') {
-      sh 'npx ts-node scripts/notify-slack.ts reports/playwright-report/results.json || true'
+      withEnv(['SLACK_WEBHOOK_URL=${SLACK_WEBHOOK}', "BUILD_NUMBER=\${BUILD_NUMBER}", "JENKINS_URL=${JENKINS_URL}", 'JOB_NAME=BestTester']) {
+        sh 'npx ts-node scripts/notify-slack.ts reports/playwright-report/results.json || true'
+      }
     }
   }
 }
