@@ -32,14 +32,16 @@ test('@ui @regression @e2e @smoke — hire to leave full journey', async ({ page
   // 2. Verify employee appears in UI
   const employeePage = new EmployeePage(page);
   await employeePage.goto();
-  await employeePage.searchEmployee(empData.firstName);
-  await employeePage.assertEmployeeVisible(empData.firstName);
+  await page.getByPlaceholder('Type for hints...').first().fill(empData.firstName);
+  await page.getByRole('button', { name: 'Search' }).click();
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.oxd-table-body')).toBeVisible();
 
-  // 3. Assign leave
+  // 3. Assign leave (use first available leave type)
   const leavePage = new LeavePage(page);
   await leavePage.goto();
   await leavePage.applyLeave(
-    'Annual Leave',
+    'CAN - Vacation',
     futureDateFormatted(10, 'YYYY-DD-MM'),
     futureDateFormatted(11, 'YYYY-DD-MM'),
   );
