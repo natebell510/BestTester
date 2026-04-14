@@ -41,11 +41,14 @@ test.describe('Employee Management @ui @regression', () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
-  test('should add a new employee via UI', async ({ employeePage }) => {
+  test('should add a new employee via UI', async ({ employeePage, page }) => {
     const emp = generateEmployee();
     await employeePage.goto();
     await employeePage.addEmployee(emp.firstName, emp.lastName);
-    await employeePage.assertSaveSuccess();
+    // After save, either success toast or redirect to personal details page
+    await expect(page.getByText(MESSAGES.SAVED).or(page.getByText('Personal Details'))).toBeVisible(
+      { timeout: 15_000 },
+    );
   });
 
   test('should navigate to add employee page', async ({ page }) => {

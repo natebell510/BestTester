@@ -1,8 +1,6 @@
 import * as fs from 'fs';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse');
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 
 /**
@@ -82,7 +80,10 @@ export async function writeExcel(
 
 export async function readPDF(filePath: string): Promise<string> {
   const buffer = fs.readFileSync(filePath);
-  const result = await pdfParse(buffer);
+  // Dynamic import to handle pdf-parse's non-standard export
+  const mod = await import('pdf-parse');
+  const parse = typeof mod.default === 'function' ? mod.default : mod;
+  const result = await parse(buffer);
   return result.text;
 }
 

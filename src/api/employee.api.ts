@@ -42,6 +42,6 @@ export class EmployeeAPI extends BaseAPI {
   }
 
   async remove(empNumber: number): Promise<void> {
-    await this.delete(`/web/index.php/api/v2/pim/employees/${empNumber}`);
+    await this.delete('/web/index.php/api/v2/pim/employees', { ids: [empNumber] });
   }
 }

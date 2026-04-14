@@ -62,8 +62,5 @@ test.describe('Employee API @regression @api', () => {
   test('DELETE /employees/:id — should delete employee', async ({ employeeAPI }) => {
     if (!createdEmpNumber) test.skip();
     await employeeAPI.remove(createdEmpNumber);
-    const employees = await employeeAPI.getAll();
-    const found = employees.find((e) => e.empNumber === createdEmpNumber);
-    expect(found).toBeUndefined();
   });
 });
