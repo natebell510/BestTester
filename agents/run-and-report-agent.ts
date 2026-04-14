@@ -15,7 +15,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
 import axios from 'axios';
-import { triggerJob, pollUntilComplete } from '../src/utils/jenkins';
+import { triggerJob, pollUntilComplete, getJobStatus } from '../src/utils/jenkins';
 import { JiraClient, jiraConfig } from '../src/utils/jira';
 import { parseJUnitReport, readPlaywrightResults } from '../src/utils/jira-reporter';
 import { postMessage } from '../src/utils/slack';
@@ -88,9 +88,39 @@ async function main() {
   const buildUrl    = `${JENKINS_URL}/job/${JOB}/${buildNumber}/`;
   console.log(`   Build #${buildNumber} started → ${buildUrl}`);
 
-  // ── 3. Poll until complete ────────────────────────────────────────────────
-  console.log('⏳ Polling until build completes...');
-  const status = await pollUntilComplete(JOB, buildNumber, 15_000, 120);
+  // ── 3. Stream console output while polling ────────────────────────────────
+  console.log('⏳ Streaming console output...\n');
+  let logOffset = 0;
+  let status = 'BUILDING';
+  for (let i = 0; i < 120; i++) {
+    try {
+      const logRes = await axios.get(
+        `${JENKINS_URL}/job/${JOB}/${buildNumber}/logText/progressiveText`,
+        { auth: jenkinsAuth, params: { start: logOffset }, transformResponse: [d => d] },
+      );
+      const chunk = logRes.data as string;
+      if (chunk) { process.stdout.write(chunk); logOffset += Buffer.byteLength(chunk); }
+      const more = logRes.headers['x-more-data'];
+      if (more !== 'true') break;
+    } catch { /* build may not have started logging yet */ }
+    await sleep(10_000);
+    status = await getJobStatus(JOB, buildNumber).catch(() => 'BUILDING');
+    if (status !== 'BUILDING') {
+      // Grab remaining log
+      try {
+        const finalLog = await axios.get(
+          `${JENKINS_URL}/job/${JOB}/${buildNumber}/logText/progressiveText`,
+          { auth: jenkinsAuth, params: { start: logOffset }, transformResponse: [d => d] },
+        );
+        if (finalLog.data) process.stdout.write(finalLog.data as string);
+      } catch {}
+      break;
+    }
+  }
+  if (status === 'BUILDING') {
+    status = await pollUntilComplete(JOB, buildNumber, 15_000, 60);
+  }
+  console.log('');
   const icon   = status === 'SUCCESS' ? '✅' : status === 'UNSTABLE' ? '⚠️' : '❌';
   console.log(`${icon} Build #${buildNumber} finished: ${status}`);
   await postMessage(`${icon} *BestTester* build #${buildNumber} finished: *${status}*\n${buildUrl}`);
