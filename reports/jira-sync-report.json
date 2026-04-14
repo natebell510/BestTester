@@ -1,14 +1,7 @@
 {
-  "timestamp": "2026-04-14T18:07:43.144Z",
-  "buildNumber": 2,
-  "buildUrl": "http://54.88.204.32:8080/job/BestTester/2/",
-  "status": "SUCCESS",
-  "linkedJiraKey": "SCRUM-5",
-  "summary": {
-    "passed": 0,
-    "failed": 0,
-    "skipped": 0
-  },
+  "timestamp": "2026-04-14T19:34:18.561Z",
+  "buildNumber": 4,
+  "buildUrl": "http://54.88.204.32:8080/job/BestTester/4/",
   "created": [],
   "updated": [],
   "closed": [],

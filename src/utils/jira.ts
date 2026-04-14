@@ -4,18 +4,30 @@ import * as path from 'path';
 import FormData from 'form-data';
 import { logger } from './logger';
 import {
-  JiraConfig, JiraIssue, JiraCreatePayload,
-  JiraAdfDoc, JiraAdfNode, JiraSyncResult, TestFailure,
-  TestExecutionRecord, TestExecutionPayload,
+  JiraConfig,
+  JiraIssue,
+  JiraCreatePayload,
+  JiraAdfDoc,
+  JiraAdfNode,
+  JiraSyncResult,
+  TestFailure,
+  TestExecutionPayload,
 } from '../types/jira.types';
 
-export const jiraConfig: JiraConfig = {
-  baseUrl:      process.env.JIRA_BASE_URL      ?? '',
-  email:        process.env.JIRA_EMAIL         ?? '',
-  apiToken:     process.env.JIRA_API_TOKEN     ?? '',
-  projectKey:   process.env.JIRA_PROJECT_KEY   ?? 'BT',
-  bugIssueType: process.env.JIRA_ISSUE_TYPE    ?? 'Bug',
-};
+export function getJiraConfig(): JiraConfig {
+  return {
+    baseUrl: process.env.JIRA_BASE_URL ?? '',
+    email: process.env.JIRA_EMAIL ?? '',
+    apiToken: process.env.JIRA_API_TOKEN ?? '',
+    projectKey: process.env.JIRA_PROJECT_KEY ?? 'BT',
+    bugIssueType: process.env.JIRA_ISSUE_TYPE ?? 'Bug',
+  };
+}
+
+// Kept for backward compat — lazy proxy
+export const jiraConfig: JiraConfig = new Proxy({} as JiraConfig, {
+  get: (_t, prop: string) => getJiraConfig()[prop as keyof JiraConfig],
+});
 
 export class JiraClient {
   private readonly http: AxiosInstance;
@@ -25,14 +37,17 @@ export class JiraClient {
     this.config = config;
     this.http = axios.create({
       baseURL: `${config.baseUrl}/rest/api/3`,
-      auth:    { username: config.email, password: config.apiToken },
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      auth: { username: config.email, password: config.apiToken },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     });
   }
 
   // ─── Search ────────────────────────────────────────────────────────────────
 
-  async searchIssues(jql: string, fields = ['summary', 'status', 'labels', 'priority']): Promise<JiraIssue[]> {
+  async searchIssues(
+    jql: string,
+    fields = ['summary', 'status', 'labels', 'priority'],
+  ): Promise<JiraIssue[]> {
     const res = await this.http.post('/search', { jql, fields, maxResults: 100 });
     return res.data.issues as JiraIssue[];
   }
@@ -80,9 +95,11 @@ export class JiraClient {
 
   async transitionIssue(issueKey: string, transitionName: string): Promise<void> {
     const transitions = await this.getTransitions(issueKey);
-    const t = transitions.find(x => x.name.toLowerCase().includes(transitionName.toLowerCase()));
+    const t = transitions.find((x) => x.name.toLowerCase().includes(transitionName.toLowerCase()));
     if (!t) {
-      logger.warn(`Transition "${transitionName}" not found for ${issueKey}. Available: ${transitions.map(x => x.name).join(', ')}`);
+      logger.warn(
+        `Transition "${transitionName}" not found for ${issueKey}. Available: ${transitions.map((x) => x.name).join(', ')}`,
+      );
       return;
     }
     await this.http.post(`/issue/${issueKey}/transitions`, { transition: { id: t.id } });
@@ -93,7 +110,7 @@ export class JiraClient {
     // Try common transition names in order
     for (const name of ['Done', 'Close', 'Resolve', 'Fixed']) {
       const transitions = await this.getTransitions(issueKey);
-      const t = transitions.find(x => x.name.toLowerCase().includes(name.toLowerCase()));
+      const t = transitions.find((x) => x.name.toLowerCase().includes(name.toLowerCase()));
       if (t) {
         await this.http.post(`/issue/${issueKey}/transitions`, { transition: { id: t.id } });
         logger.info(`Closed ${issueKey} via "${t.name}"`);
@@ -108,8 +125,8 @@ export class JiraClient {
   async linkIssue(inwardKey: string, outwardKey: string, linkType = 'Test'): Promise<void> {
     try {
       await this.http.post('/issueLink', {
-        type:         { name: linkType },
-        inwardIssue:  { key: inwardKey },
+        type: { name: linkType },
+        inwardIssue: { key: inwardKey },
         outwardIssue: { key: outwardKey },
       });
       logger.info(`Linked ${inwardKey} → ${outwardKey} (${linkType})`);
@@ -117,8 +134,8 @@ export class JiraClient {
       // Fallback to "Relates" if custom link type not found
       if (e?.response?.status === 404 || e?.response?.status === 400) {
         await this.http.post('/issueLink', {
-          type:         { name: 'Relates' },
-          inwardIssue:  { key: inwardKey },
+          type: { name: 'Relates' },
+          inwardIssue: { key: inwardKey },
           outwardIssue: { key: outwardKey },
         });
         logger.info(`Linked ${inwardKey} → ${outwardKey} (Relates)`);
@@ -143,38 +160,59 @@ export class JiraClient {
 
   // ─── Test Execution issue ──────────────────────────────────────────────────
 
-  async createTestExecution(
-    payload: TestExecutionPayload,
-    linkToKey?: string,
-  ): Promise<JiraIssue> {
-    const passed  = payload.tests.filter(t => t.status === 'PASS').length;
-    const failed  = payload.tests.filter(t => t.status === 'FAIL').length;
-    const skipped = payload.tests.filter(t => t.status === 'SKIP').length;
-    const icon    = failed > 0 ? '❌' : '✅';
+  async createTestExecution(payload: TestExecutionPayload, linkToKey?: string): Promise<JiraIssue> {
+    const passed = payload.tests.filter((t) => t.status === 'PASS').length;
+    const failed = payload.tests.filter((t) => t.status === 'FAIL').length;
+    const skipped = payload.tests.filter((t) => t.status === 'SKIP').length;
+    const icon = failed > 0 ? '❌' : '✅';
 
     const headerRow: JiraAdfNode = {
       type: 'tableRow',
-      content: ['Test ID', 'Test Name', 'Status', 'Duration'].map(h => ({
+      content: ['Test ID', 'Test Name', 'Status', 'Duration'].map((h) => ({
         type: 'tableHeader',
         attrs: { background: '#f4f5f7' },
-        content: [{ type: 'paragraph', content: [{ type: 'text', text: h, marks: [{ type: 'strong' }] }] }],
+        content: [
+          { type: 'paragraph', content: [{ type: 'text', text: h, marks: [{ type: 'strong' }] }] },
+        ],
       })),
     };
 
-    const dataRows: JiraAdfNode[] = payload.tests.map(t => ({
+    const dataRows: JiraAdfNode[] = payload.tests.map((t) => ({
       type: 'tableRow',
       content: [
-        { type: 'tableCell', content: [{ type: 'paragraph', content: [{ type: 'text', text: t.testId }] }] },
-        { type: 'tableCell', content: [{ type: 'paragraph', content: [{ type: 'text', text: t.testName }] }] },
         {
           type: 'tableCell',
-          content: [{ type: 'paragraph', content: [{
-            type: 'text',
-            text: t.status === 'PASS' ? '✅ PASS' : t.status === 'FAIL' ? '❌ FAIL' : '⏭ SKIP',
-            marks: t.status === 'FAIL' ? [{ type: 'strong' }] : [],
-          }] }],
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: t.testId }] }],
         },
-        { type: 'tableCell', content: [{ type: 'paragraph', content: [{ type: 'text', text: `${(t.duration / 1000).toFixed(2)}s` }] }] },
+        {
+          type: 'tableCell',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: t.testName }] }],
+        },
+        {
+          type: 'tableCell',
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text:
+                    t.status === 'PASS' ? '✅ PASS' : t.status === 'FAIL' ? '❌ FAIL' : '⏭ SKIP',
+                  marks: t.status === 'FAIL' ? [{ type: 'strong' }] : [],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: 'tableCell',
+          content: [
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: `${(t.duration / 1000).toFixed(2)}s` }],
+            },
+          ],
+        },
       ],
     }));
 
@@ -187,19 +225,41 @@ export class JiraClient {
     };
 
     const descContent: JiraAdfNode[] = [
-      { type: 'paragraph', content: [{ type: 'text', text: '🤖 Automated test execution report generated by BestTester / Playwright.' }] },
+      {
+        type: 'paragraph',
+        content: [
+          {
+            type: 'text',
+            text: '🤖 Automated test execution report generated by BestTester / Playwright.',
+          },
+        ],
+      },
       summaryPara,
-      ...(payload.buildUrl ? [{ type: 'paragraph' as const, content: [{ type: 'text', text: 'Build: ', marks: [{ type: 'strong' }] }, { type: 'text', text: payload.buildUrl }] }] : []),
-      { type: 'table', attrs: { isNumberColumnEnabled: false, layout: 'default' }, content: [headerRow, ...dataRows] },
+      ...(payload.buildUrl
+        ? [
+            {
+              type: 'paragraph' as const,
+              content: [
+                { type: 'text', text: 'Build: ', marks: [{ type: 'strong' }] },
+                { type: 'text', text: payload.buildUrl },
+              ],
+            },
+          ]
+        : []),
+      {
+        type: 'table',
+        attrs: { isNumberColumnEnabled: false, layout: 'default' },
+        content: [headerRow, ...dataRows],
+      },
     ];
 
     const issue = await this.createIssue({
       fields: {
-        project:     { key: this.config.projectKey },
-        summary:     `${icon} ${payload.summary} — ${passed}/${payload.tests.length} passed`,
-        issuetype:   { name: 'Test Execution' },
-        priority:    { name: failed > 0 ? 'High' : 'Medium' },
-        labels:      ['automated-test', 'playwright', 'test-execution'],
+        project: { key: this.config.projectKey },
+        summary: `${icon} ${payload.summary} — ${passed}/${payload.tests.length} passed`,
+        issuetype: { name: 'Test Execution' },
+        priority: { name: failed > 0 ? 'High' : 'Medium' },
+        labels: ['automated-test', 'playwright', 'test-execution'],
         description: { type: 'doc', version: 1, content: descContent },
       },
     } as any);
@@ -266,18 +326,18 @@ export class JiraClient {
 
     return {
       fields: {
-        project:     { key: this.config.projectKey },
-        summary:     `[AUTO] Test Failure: ${failure.testName}`,
-        issuetype:   { name: this.config.bugIssueType },
-        priority:    { name: 'High' },
-        labels:      ['automated-test', 'playwright', label],
+        project: { key: this.config.projectKey },
+        summary: `[AUTO] Test Failure: ${failure.testName}`,
+        issuetype: { name: this.config.bugIssueType },
+        priority: { name: 'High' },
+        labels: ['automated-test', 'playwright', label],
         description: this.textToAdf(
           `*Test:* ${failure.testName}\n` +
-          `*Suite:* ${failure.suiteName}\n` +
-          `*Duration:* ${(failure.duration / 1000).toFixed(1)}s\n` +
-          `*File:* ${failure.file ?? 'unknown'}\n\n` +
-          `*Error:*\n{code}\n${failure.errorMessage}\n{code}` +
-          buildInfo,
+            `*Suite:* ${failure.suiteName}\n` +
+            `*Duration:* ${(failure.duration / 1000).toFixed(1)}s\n` +
+            `*File:* ${failure.file ?? 'unknown'}\n\n` +
+            `*Error:*\n{code}\n${failure.errorMessage}\n{code}` +
+            buildInfo,
         ),
       },
     };
@@ -292,11 +352,14 @@ export class JiraClient {
   }
 
   labelFromTest(testName: string): string {
-    return `test-${testName.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60)}`;
+    return `test-${testName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .slice(0, 60)}`;
   }
 
   textToAdf(text: string): JiraAdfDoc {
-    const paragraphs: JiraAdfNode[] = text.split('\n\n').map(block => ({
+    const paragraphs: JiraAdfNode[] = text.split('\n\n').map((block) => ({
       type: 'paragraph',
       content: [{ type: 'text', text: block.replace(/\n/g, ' ') }],
     }));
