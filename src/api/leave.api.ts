@@ -41,7 +41,6 @@ export class LeaveAPI extends BaseAPI {
         leaveTypeId: payload.leaveTypeId,
         fromDate: payload.fromDate,
         toDate: payload.toDate,
-        comment: payload.comment ?? '',
       },
     );
     return res.data;

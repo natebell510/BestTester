@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-import pdfParse = require('pdf-parse');
+const pdfParse = require('pdf-parse');
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 
 /**
