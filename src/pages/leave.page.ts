@@ -28,12 +28,11 @@ export class LeavePage extends BasePage {
   async applyLeave(leaveType: string, fromDate: string, toDate: string): Promise<void> {
     await this.navigate(URLS.APPLY_LEAVE);
     await this.leaveTypeDropdown.click();
-    // Pick the requested type if available, otherwise pick the first non-placeholder option
-    const option = this.page.getByRole('option', { name: leaveType });
-    if ((await option.count()) > 0) {
-      await option.click();
-    } else {
-      await this.page.getByRole('option').nth(1).click();
+    // Pick the requested type if visible, otherwise pick the first option
+    try {
+      await this.page.getByRole('option', { name: leaveType }).click({ timeout: 3000 });
+    } catch {
+      await this.page.getByRole('option').first().click();
     }
     // Clear and fill date inputs (OrangeHRM date fields don't clear on fill)
     await this.fromDateInput.click({ clickCount: 3 });

@@ -80,10 +80,10 @@ export async function writeExcel(
 
 export async function readPDF(filePath: string): Promise<string> {
   const buffer = fs.readFileSync(filePath);
-  // pdf-parse has a non-standard export; resolve at runtime
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pdfParse = require('pdf-parse/lib/pdf-parse');
-  const result = await pdfParse(buffer);
+  const mod = require('pdf-parse');
+  const parse = typeof mod === 'function' ? mod : mod.default;
+  const result = await parse(buffer);
   return result.text;
 }
 
