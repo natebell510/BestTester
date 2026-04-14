@@ -19,10 +19,10 @@ node {
     }
     stage('Setup') {
       sh 'npm ci'
-      sh 'npx playwright install --with-deps chromium'
+      sh 'npx playwright install chromium'
     }
     stage('Tests') {
-      def exitCode = sh(script: 'npx cross-env CI=true BASE_URL=https://opensource-demo.orangehrmlive.com ADMIN_USERNAME=Admin ADMIN_PASSWORD=admin123 npx playwright test --config=config/playwright.config.ts --project=chromium --reporter=list,html,junit,allure-playwright', returnStatus: true)
+      def exitCode = sh(script: 'npx cross-env CI=true BASE_URL=https://opensource-demo.orangehrmlive.com ADMIN_USERNAME=Admin ADMIN_PASSWORD=admin123 npx playwright test --config=config/playwright.config.ts --project=chromium', returnStatus: true)
       env.TEST_EXIT_CODE = exitCode.toString()
       if (exitCode != 0) {
         unstable('Tests failed')
