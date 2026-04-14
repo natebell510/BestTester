@@ -1,0 +1,154 @@
+/**
+ * Jenkins Job Template: Single Test / Test Class Runner
+ *
+ * Usage:
+ *   - RUN_MODE=single  → runs one spec file  (TEST_PATH required)
+ *   - RUN_MODE=class   → runs all specs in a folder/class (TEST_PATH required, e.g. tests/ui/smoke/)
+ *
+ * Parameters are injected as environment variables so every test can read them via process.env.
+ */
+pipeline {
+  agent any
+
+  environment {
+    NODE_VERSION          = '20'
+    BASE_URL              = 'https://opensource-demo.orangehrmlive.com'
+    ADMIN_USERNAME        = credentials('ORANGEHRM_USERNAME')
+    ADMIN_PASSWORD        = credentials('ORANGEHRM_PASSWORD')
+    AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+    AWS_BEDROCK_REGION    = 'us-east-1'
+    SLACK_WEBHOOK_URL     = credentials('SLACK_WEBHOOK_URL')
+    JIRA_BASE_URL         = credentials('JIRA_BASE_URL')
+    JIRA_EMAIL            = credentials('JIRA_EMAIL')
+    JIRA_API_TOKEN        = credentials('JIRA_API_TOKEN')
+  }
+
+  parameters {
+    // ── What to run ──────────────────────────────────────────────────────────
+    choice(
+      name: 'RUN_MODE',
+      choices: ['single', 'class'],
+      description: 'single → one spec file | class → entire folder / test class'
+    )
+    string(
+      name: 'TEST_PATH',
+      defaultValue: '',
+      description: 'Relative path to spec file or folder.\n  single: tests/ui/smoke/login.spec.ts\n  class:  tests/ui/smoke/'
+    )
+
+    // ── Browser & environment ────────────────────────────────────────────────
+    choice(
+      name: 'BROWSER',
+      choices: ['chromium', 'firefox', 'webkit'],
+      description: 'Playwright browser project'
+    )
+    choice(
+      name: 'TEST_ENV',
+      choices: ['staging', 'dev', 'prod'],
+      description: 'Target environment'
+    )
+
+    // ── Extra env vars (KEY=VALUE pairs, one per line) ───────────────────────
+    text(
+      name: 'EXTRA_ENV_VARS',
+      defaultValue: '',
+      description: 'Additional environment variables injected at runtime.\nFormat: one KEY=VALUE per line.\nExample:\n  FEATURE_FLAG_X=true\n  TIMEOUT_MS=30000'
+    )
+
+    // ── Jira ─────────────────────────────────────────────────────────────────
+    string(
+      name: 'JIRA_KEY',
+      defaultValue: '',
+      description: 'Jira issue key to link this run (e.g. BT-42). Leave blank to skip.'
+    )
+  }
+
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+    timeout(time: 30, unit: 'MINUTES')
+    timestamps()
+    ansiColor('xterm')
+  }
+
+  stages {
+
+    stage('Validate') {
+      steps {
+        script {
+          if (!params.TEST_PATH?.trim()) {
+            error('TEST_PATH must not be empty.')
+          }
+        }
+      }
+    }
+
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+
+    stage('Setup') {
+      steps {
+        sh '''
+          npm ci
+          npx playwright install --with-deps chromium firefox webkit
+        '''
+      }
+    }
+
+    stage('Run Test') {
+      steps {
+        script {
+          // Build extra env exports from the multi-line text param
+          def extraExports = params.EXTRA_ENV_VARS?.trim()
+            ? params.EXTRA_ENV_VARS.trim().split('\n').collect { "export ${it.trim()}" }.join('\n')
+            : ''
+
+          def grepFlag = params.RUN_MODE == 'single' ? "--grep ''" : ''
+
+          sh """
+            ${extraExports}
+            export TEST_ENV=${params.TEST_ENV}
+            npx cross-env CI=true \\
+              npx playwright test ${params.TEST_PATH.trim()} \\
+              --project=${params.BROWSER} \\
+              --reporter=list,html,junit,allure-playwright \\
+              || true
+          """
+        }
+      }
+    }
+
+    stage('Publish Reports') {
+      steps {
+        junit allowEmptyResults: true, testResults: 'reports/playwright-report/junit.xml'
+
+        publishHTML([
+          allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true,
+          reportDir: 'reports/playwright-report', reportFiles: 'index.html',
+          reportName: 'Playwright Report'
+        ])
+      }
+    }
+
+    stage('Jira Sync') {
+      when { expression { params.JIRA_KEY?.trim() } }
+      steps {
+        sh "npx ts-node agents/jira-sync-agent.ts --build ${BUILD_NUMBER} --jira-key ${params.JIRA_KEY.trim()} || true"
+      }
+    }
+  }
+
+  post {
+    always {
+      script {
+        def jiraArg = params.JIRA_KEY?.trim() ? params.JIRA_KEY.trim() : ''
+        sh "npx ts-node scripts/post-results-to-slack.ts ${jiraArg} || true"
+      }
+      archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
+    }
+    success { echo '✅ Test run passed.' }
+    failure { echo '❌ Test run failed. Check the Playwright report.' }
+    cleanup { cleanWs() }
+  }
+}

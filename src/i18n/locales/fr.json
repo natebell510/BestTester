@@ -1,0 +1,10 @@
+{
+  "button.save": "Enregistrer",
+  "button.cancel": "Annuler",
+  "button.login": "Connexion",
+  "nav.dashboard": "Tableau de bord",
+  "nav.employees": "Employés",
+  "nav.leave": "Congé",
+  "label.username": "Nom d'utilisateur",
+  "label.password": "Mot de passe"
+}

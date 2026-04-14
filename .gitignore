@@ -1,0 +1,34 @@
+node_modules/
+dist/
+.env
+config/environments/*.env
+reports/allure-results/
+reports/allure-report/
+reports/playwright-report/
+reports/suggestions/
+test-results/
+playwright/.cache/
+*.log
+.DS_Store
+auth-state/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+
+# Sensitive files
+*.pem
+ec2-instance.json
+.auth/
+
+# Root-level report output
+playwright-report/
+
+# Judge logs
+reports/judge-logs/
+reports/custom/
+
+# Mutation reports
+mutation/mutation-report/

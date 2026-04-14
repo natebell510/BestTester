@@ -1,0 +1,65 @@
+/**
+ * @file leave.spec.ts
+ * @description Regression tests for OrangeHRM Leave module UI.
+ * @tags @regression
+ */
+import { test, expect } from '../../../src/fixtures/base.fixture';
+import { futureDateFormatted } from '../../../src/utils/date-utils';
+import { URLS, LEAVE_TYPES, NAV } from '../../../src/constants';
+
+test.use({ storageState: 'auth-state/admin.json' });
+
+test.describe('Leave Module @regression', () => {
+
+  test('should display leave module heading', async ({ leavePage, page }) => {
+    await leavePage.goto();
+    await expect(page.getByRole('heading', { name: /leave/i })).toBeVisible();
+  });
+
+  test('should display Apply link in leave module', async ({ leavePage, page }) => {
+    await leavePage.goto();
+    await expect(page.getByRole('link', { name: 'Apply' })).toBeVisible();
+  });
+
+  test('should display My Leave link in leave module', async ({ leavePage, page }) => {
+    await leavePage.goto();
+    await expect(page.getByRole('link', { name: 'My Leave' })).toBeVisible();
+  });
+
+  test('should navigate to apply leave page', async ({ page }) => {
+    await page.goto(URLS.APPLY_LEAVE);
+    await expect(page.getByRole('heading', { name: 'Apply Leave' })).toBeVisible();
+  });
+
+  test('should display leave type dropdown on apply page', async ({ page }) => {
+    await page.goto(URLS.APPLY_LEAVE);
+    await expect(page.locator('.oxd-select-text').first()).toBeVisible();
+  });
+
+  test('should show validation when applying leave without dates', async ({ page }) => {
+    await page.goto(URLS.APPLY_LEAVE);
+    await page.locator('.oxd-select-text').first().click();
+    await page.getByRole('option', { name: LEAVE_TYPES.ANNUAL }).click();
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await expect(page.getByText('Required').first()).toBeVisible();
+  });
+
+  test('should apply for annual leave successfully', async ({ leavePage }) => {
+    await leavePage.goto();
+    await leavePage.applyLeave(
+      LEAVE_TYPES.ANNUAL,
+      futureDateFormatted(10),
+      futureDateFormatted(11),
+    );
+  });
+
+  test('should display leave list page', async ({ page }) => {
+    await page.goto(URLS.LEAVE_LIST);
+    await expect(page.getByRole('heading', { name: /leave/i })).toBeVisible();
+  });
+
+  test('should display Entitlements link', async ({ leavePage, page }) => {
+    await leavePage.goto();
+    await expect(page.getByRole('link', { name: 'Entitlements' })).toBeVisible();
+  });
+});

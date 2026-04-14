@@ -1,0 +1,33 @@
+name: Mutation Testing
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly Monday 3am
+  workflow_dispatch:
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - name: Run Stryker
+        run: npm run test:mutation
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      - name: Post score to Slack
+        if: always()
+        run: |
+          SCORE=$(node -e "const r=require('./mutation/mutation-report/mutation.json'); console.log(r.mutationScore.toFixed(1))")
+          curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H 'Content-type: application/json' \
+            --data "{\"text\":\"🧬 Mutation score: ${SCORE}% — BestTester weekly run\"}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-report
+          path: mutation/mutation-report/

@@ -1,0 +1,10 @@
+{
+  "button.save": "Save",
+  "button.cancel": "Cancel",
+  "button.login": "Login",
+  "nav.dashboard": "Dashboard",
+  "nav.employees": "Employees",
+  "nav.leave": "Leave",
+  "label.username": "Username",
+  "label.password": "Password"
+}

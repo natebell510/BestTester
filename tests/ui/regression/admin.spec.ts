@@ -1,0 +1,56 @@
+/**
+ * @file admin.spec.ts
+ * @description Regression tests for OrangeHRM Admin module.
+ * @tags @regression
+ */
+import { test, expect } from '../../../src/fixtures/base.fixture';
+import { URLS, NAV } from '../../../src/constants';
+
+test.use({ storageState: 'auth-state/admin.json' });
+
+test.describe('Admin Module @regression', () => {
+
+  test('should display admin module heading', async ({ page }) => {
+    await page.goto(URLS.ADMIN);
+    await expect(page.getByRole('heading', { name: 'User Management' })).toBeVisible();
+  });
+
+  test('should display user list table', async ({ page }) => {
+    await page.goto(URLS.ADMIN);
+    await expect(page.locator('.oxd-table-body')).toBeVisible();
+  });
+
+  test('should search users by username', async ({ page }) => {
+    await page.goto(URLS.ADMIN);
+    await page.getByPlaceholder('Username').fill('Admin');
+    await page.getByRole('button', { name: 'Search' }).click();
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('.oxd-table-body')).toBeVisible();
+  });
+
+  test('should display Add User button', async ({ page }) => {
+    await page.goto(URLS.ADMIN);
+    await expect(page.getByRole('button', { name: 'Add' })).toBeVisible();
+  });
+
+  test('should display Job Titles under Job menu', async ({ page }) => {
+    await page.goto(URLS.ADMIN);
+    await page.getByRole('link', { name: 'Job' }).click();
+    await expect(page.getByRole('menuitem', { name: 'Job Titles' })).toBeVisible();
+  });
+
+  test('should navigate to Job Titles page', async ({ page }) => {
+    await page.goto('/web/index.php/admin/viewJobTitleList');
+    await expect(page.getByRole('heading', { name: 'Job Titles' })).toBeVisible();
+  });
+
+  test('should display Organization menu', async ({ page }) => {
+    await page.goto(URLS.ADMIN);
+    await expect(page.getByRole('link', { name: 'Organization' })).toBeVisible();
+  });
+
+  test('should navigate to Locations page', async ({ page }) => {
+    await page.goto('/web/index.php/admin/viewLocations');
+    await expect(page.getByRole('heading', { name: 'Locations' })).toBeVisible();
+  });
+});
