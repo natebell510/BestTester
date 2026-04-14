@@ -6,7 +6,8 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
+import * as http from 'http';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env'), override: true });
 
@@ -14,6 +15,26 @@ const JENKINS_URL = process.env.JENKINS_URL ?? 'http://98.81.219.145:8080';
 const GITHUB_REPO = process.env.GITHUB_REPO ?? 'https://github.com/your-org/BestTester';
 const KEY_FILE    = path.resolve(__dirname, '../besttester-jenkins-key.pem');
 const EC2_IP      = '98.81.219.145';
+
+// Create an axios instance that preserves cookies across requests (required for CSRF crumb)
+function createJenkinsClient(auth: { username: string; password: string }): AxiosInstance {
+  const cookieJar: string[] = [];
+  const client = axios.create({
+    baseURL: JENKINS_URL,
+    auth,
+    httpAgent: new http.Agent({ keepAlive: true }),
+  });
+  client.interceptors.response.use(res => {
+    const setCookie = res.headers['set-cookie'];
+    if (setCookie) cookieJar.push(...setCookie.map(c => c.split(';')[0]));
+    return res;
+  });
+  client.interceptors.request.use(config => {
+    if (cookieJar.length) config.headers['Cookie'] = cookieJar.join('; ');
+    return config;
+  });
+  return client;
+}
 
 // Resolve Jenkins auth: prefer .env token (post-setup), fall back to SSH initial password (fresh install)
 function getAuthFromEnv(): { username: string; password: string } | null {
@@ -38,10 +59,10 @@ async function getInitialPassword(): Promise<string> {
   }
 }
 
-async function waitForJenkins(auth: { username: string; password: string }): Promise<void> {
+async function waitForJenkins(client: AxiosInstance): Promise<void> {
   for (let i = 0; i < 20; i++) {
     try {
-      await axios.get(`${JENKINS_URL}/api/json`, { auth });
+      await client.get('/api/json');
       console.log('   Jenkins API is ready.');
       return;
     } catch {
@@ -52,12 +73,18 @@ async function waitForJenkins(auth: { username: string; password: string }): Pro
   throw new Error('Jenkins API not ready after timeout');
 }
 
-async function getCrumb(auth: { username: string; password: string }): Promise<Record<string, string>> {
-  const res = await axios.get(`${JENKINS_URL}/crumbIssuer/api/json`, { auth });
-  return { [res.data.crumbRequestField]: res.data.crumb };
+async function getCrumb(client: AxiosInstance): Promise<Record<string, string>> {
+  try {
+    const res = await client.get('/crumbIssuer/api/json');
+    console.log('   CSRF crumb obtained.');
+    return { [res.data.crumbRequestField]: res.data.crumb };
+  } catch {
+    console.log('   No crumb issuer (CSRF may be disabled) — continuing without crumb.');
+    return {};
+  }
 }
 
-async function installPlugins(auth: { username: string; password: string }, crumb: Record<string, string>): Promise<void> {
+async function installPlugins(client: AxiosInstance, crumb: Record<string, string>): Promise<void> {
   console.log('🔌 Installing plugins...');
   const plugins = [
     'git', 'workflow-aggregator', 'pipeline-stage-view',
@@ -66,16 +93,16 @@ async function installPlugins(auth: { username: string; password: string }, crum
   ];
   // Use POST to pluginManager/install with form data
   const pluginList = plugins.map(p => `plugin.${p}.default=on`).join('&');
-  await axios.post(
-    `${JENKINS_URL}/pluginManager/install`,
+  await client.post(
+    '/pluginManager/install',
     pluginList + '&dynamicLoad=true',
-    { auth, headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...crumb } },
+    { headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...crumb } },
   ).catch(e => console.log(`   Plugin install response: ${e.response?.status ?? e.message}`));
   console.log('   Plugins queued for installation.');
 }
 
 async function createCredential(
-  auth: { username: string; password: string },
+  client: AxiosInstance,
   crumb: Record<string, string>,
   id: string,
   secret: string,
@@ -91,14 +118,43 @@ async function createCredential(
       $class: 'org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl',
     },
   };
-  await axios.post(
-    `${JENKINS_URL}/credentials/store/system/domain/_/createCredentials`,
+  await client.post(
+    '/credentials/store/system/domain/_/createCredentials',
     `json=${encodeURIComponent(JSON.stringify(payload))}`,
-    { auth, headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...crumb } },
+    { headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...crumb } },
   ).catch(() => console.log(`   Credential ${id} may already exist.`));
 }
 
-async function createPipelineJob(auth: { username: string; password: string }, crumb: Record<string, string>): Promise<void> {
+async function upsertJob(
+  client: AxiosInstance,
+  crumb: Record<string, string>,
+  name: string,
+  xml: string,
+): Promise<void> {
+  const headers = { 'Content-Type': 'application/xml', ...crumb };
+  console.log(`   Attempting upsert for ${name} (crumb keys: ${Object.keys(crumb).join(', ') || 'none'})...`);
+  // Try update first (job may already exist)
+  try {
+    await client.post(`/job/${name}/config.xml`, xml, { headers });
+    console.log(`   Job updated: ${name}`);
+    return;
+  } catch (e: any) {
+    if (e.response?.status === 404) {
+      try {
+        await client.post(`/createItem?name=${name}`, xml, { headers });
+        console.log(`   Job created: ${name}`);
+        return;
+      } catch (e2: any) {
+        console.error(`   Failed to create ${name}: ${e2.response?.status} ${e2.response?.statusText}`);
+        throw e2;
+      }
+    }
+    console.error(`   Failed to update ${name}: ${e.response?.status} ${e.response?.statusText} ${JSON.stringify(e.response?.data)}`);
+    throw e;
+  }
+}
+
+async function createPipelineJob(client: AxiosInstance, crumb: Record<string, string>): Promise<void> {
   console.log('📋 Creating BestTester pipeline job...');
   const jobXml = `<?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job">
@@ -133,27 +189,10 @@ async function createPipelineJob(auth: { username: string; password: string }, c
   <disabled>false</disabled>
 </flow-definition>`.replace('*/main', '*/master');
 
-  try {
-    await axios.post(
-      `${JENKINS_URL}/createItem?name=BestTester`,
-      jobXml,
-      { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
-    );
-    console.log('   Pipeline job created: BestTester');
-  } catch (e: any) {
-    if (e.response?.status === 400) {
-      console.log('   Job exists — updating config...');
-      await axios.post(
-        `${JENKINS_URL}/job/BestTester/config.xml`,
-        jobXml,
-        { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
-      );
-      console.log('   Pipeline job updated: BestTester');
-    } else throw e;
-  }
+  await upsertJob(client, crumb, 'BestTester', jobXml);
 }
 
-async function createNightlyJob(auth: { username: string; password: string }, crumb: Record<string, string>): Promise<void> {
+async function createNightlyJob(client: AxiosInstance, crumb: Record<string, string>): Promise<void> {
   console.log('🌙 Creating nightly full-regression job...');
   const jobXml = `<?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job">
@@ -198,27 +237,10 @@ pipeline {
   <disabled>false</disabled>
 </flow-definition>`;
 
-  try {
-    await axios.post(
-      `${JENKINS_URL}/createItem?name=BestTester-Nightly`,
-      jobXml,
-      { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
-    );
-    console.log('   Nightly job created: BestTester-Nightly (cron: H 2 * * *)');
-  } catch (e: any) {
-    if (e.response?.status === 400) {
-      console.log('   Nightly job exists — updating config...');
-      await axios.post(
-        `${JENKINS_URL}/job/BestTester-Nightly/config.xml`,
-        jobXml,
-        { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
-      );
-      console.log('   Nightly job updated: BestTester-Nightly');
-    } else throw e;
-  }
+  await upsertJob(client, crumb, 'BestTester-Nightly', jobXml);
 }
 
-async function createSingleTestJob(auth: { username: string; password: string }, crumb: Record<string, string>): Promise<void> {
+async function createSingleTestJob(client: AxiosInstance, crumb: Record<string, string>): Promise<void> {
   console.log('🧪 Creating BestTester-SingleTest job...');
   const jobXml = `<?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job">
@@ -282,24 +304,7 @@ async function createSingleTestJob(auth: { username: string; password: string },
   <disabled>false</disabled>
 </flow-definition>`.replace('*/main', '*/master');
 
-  try {
-    await axios.post(
-      `${JENKINS_URL}/createItem?name=BestTester-SingleTest`,
-      jobXml,
-      { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
-    );
-    console.log('   Job created: BestTester-SingleTest');
-  } catch (e: any) {
-    if (e.response?.status === 400) {
-      console.log('   SingleTest job exists — updating config...');
-      await axios.post(
-        `${JENKINS_URL}/job/BestTester-SingleTest/config.xml`,
-        jobXml,
-        { auth, headers: { 'Content-Type': 'application/xml', ...crumb } },
-      );
-      console.log('   SingleTest job updated: BestTester-SingleTest');
-    } else throw e;
-  }
+  await upsertJob(client, crumb, 'BestTester-SingleTest', jobXml);
 }
 
 async function main() {
@@ -319,25 +324,27 @@ async function main() {
     auth = { username: 'admin', password: initialPw };
   }
 
-  await waitForJenkins(auth);
-  const crumb = await getCrumb(auth);
+  const client = createJenkinsClient(auth);
 
-  await installPlugins(auth, crumb);
+  await waitForJenkins(client);
+  const crumb = await getCrumb(client);
+
+  await installPlugins(client, crumb);
 
   console.log('🔐 Creating credentials...');
-  await createCredential(auth, crumb, 'AWS_ACCESS_KEY_ID',     process.env.AWS_ACCESS_KEY_ID     ?? '', 'AWS Access Key ID');
-  await createCredential(auth, crumb, 'AWS_SECRET_ACCESS_KEY', process.env.AWS_SECRET_ACCESS_KEY ?? '', 'AWS Secret Access Key');
-  await createCredential(auth, crumb, 'ORANGEHRM_USERNAME',    process.env.ADMIN_USERNAME         ?? 'Admin',    'OrangeHRM Admin Username');
-  await createCredential(auth, crumb, 'ORANGEHRM_PASSWORD',    process.env.ADMIN_PASSWORD         ?? 'admin123', 'OrangeHRM Admin Password');
-  await createCredential(auth, crumb, 'SLACK_WEBHOOK_URL',     process.env.SLACK_WEBHOOK_URL      ?? '', 'Slack Webhook URL');
-  await createCredential(auth, crumb, 'JIRA_BASE_URL',         process.env.JIRA_BASE_URL          ?? '', 'Jira Base URL');
-  await createCredential(auth, crumb, 'JIRA_EMAIL',            process.env.JIRA_EMAIL             ?? '', 'Jira Email');
-  await createCredential(auth, crumb, 'JIRA_API_TOKEN',        process.env.JIRA_API_TOKEN         ?? '', 'Jira API Token');
+  await createCredential(client, crumb, 'AWS_ACCESS_KEY_ID',     process.env.AWS_ACCESS_KEY_ID     ?? '', 'AWS Access Key ID');
+  await createCredential(client, crumb, 'AWS_SECRET_ACCESS_KEY', process.env.AWS_SECRET_ACCESS_KEY ?? '', 'AWS Secret Access Key');
+  await createCredential(client, crumb, 'ORANGEHRM_USERNAME',    process.env.ADMIN_USERNAME         ?? 'Admin',    'OrangeHRM Admin Username');
+  await createCredential(client, crumb, 'ORANGEHRM_PASSWORD',    process.env.ADMIN_PASSWORD         ?? 'admin123', 'OrangeHRM Admin Password');
+  await createCredential(client, crumb, 'SLACK_WEBHOOK_URL',     process.env.SLACK_WEBHOOK_URL      ?? '', 'Slack Webhook URL');
+  await createCredential(client, crumb, 'JIRA_BASE_URL',         process.env.JIRA_BASE_URL          ?? '', 'Jira Base URL');
+  await createCredential(client, crumb, 'JIRA_EMAIL',            process.env.JIRA_EMAIL             ?? '', 'Jira Email');
+  await createCredential(client, crumb, 'JIRA_API_TOKEN',        process.env.JIRA_API_TOKEN         ?? '', 'Jira API Token');
   console.log('   Credentials created.');
 
-  await createPipelineJob(auth, crumb);
-  await createNightlyJob(auth, crumb);
-  await createSingleTestJob(auth, crumb);
+  await createPipelineJob(client, crumb);
+  await createNightlyJob(client, crumb);
+  await createSingleTestJob(client, crumb);
 
   console.log('\n✅ Jenkins configured!');
   console.log(`   Dashboard  : ${JENKINS_URL}`);
