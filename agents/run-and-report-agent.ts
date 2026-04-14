@@ -13,6 +13,8 @@
  */
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+dotenv.config({ path: path.resolve(__dirname, '../.env'), override: true });
+
 import * as fs from 'fs';
 import axios from 'axios';
 import { triggerJob, pollUntilComplete, getJobStatus } from '../src/utils/jenkins';
@@ -20,8 +22,6 @@ import { JiraClient, jiraConfig } from '../src/utils/jira';
 import { parseJUnitReport, readPlaywrightResults } from '../src/utils/jira-reporter';
 import { postMessage } from '../src/utils/slack';
 import { logger } from '../src/utils/logger';
-
-dotenv.config({ path: path.resolve(__dirname, '../.env'), override: true });
 
 const args   = process.argv.slice(2);
 const get    = (flag: string) => { const i = args.indexOf(flag); return i !== -1 ? args[i + 1] : undefined; };
@@ -77,7 +77,7 @@ async function main() {
 
   // ── 1. Trigger Jenkins ────────────────────────────────────────────────────
   console.log(`🚀 Triggering Jenkins job "${JOB}" — suite: ${SUITE}`);
-  const params = SUITE !== 'all' ? { TEST_SUITE: SUITE } : {};
+  const params: Record<string, string> = SUITE !== 'all' ? { TEST_SUITE: SUITE } : {};
   const queueId = await triggerJob(JOB, params);
   console.log(`   Queued — id: ${queueId}`);
   await postMessage(`🚀 *BestTester* triggered on Jenkins (suite: *${SUITE}*). Queue id: ${queueId}`);
