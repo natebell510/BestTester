@@ -32,6 +32,9 @@ node {
       junit allowEmptyResults: true, testResults: 'reports/playwright-report/junit.xml'
       archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
     }
+    stage('Slack Notify') {
+      sh 'npx ts-node scripts/notify-slack.ts reports/playwright-report/results.json || true'
+    }
   }
 }
 `.trim();
