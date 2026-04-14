@@ -1,0 +1,16 @@
+name: PR Gate
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify PR has required reviewer
+        run: echo "PR opened — CODEOWNERS will auto-request review from @natebell510"

@@ -1,5 +1,7 @@
 #!/bin/bash
-JENKINS_PW="REPLACE_WITH_JENKINS_TOKEN"
+
+# All secrets must be provided via environment variables.
+: "${JENKINS_PW:?JENKINS_PW env var is required}"
 CLI="java -jar /home/ec2-user/jenkins-cli.jar -s http://localhost:8080 -auth admin:${JENKINS_PW}"
 
 echo "=== Creating BestTester smoke job ==="
@@ -23,8 +25,8 @@ pipeline {
     ADMIN_USERNAME        = &apos;Admin&apos;
     ADMIN_PASSWORD        = &apos;admin123&apos;
     AWS_BEDROCK_REGION    = &apos;us-east-1&apos;
-    AWS_ACCESS_KEY_ID     = &apos;REPLACE_WITH_AWS_ACCESS_KEY_ID&apos;
-    AWS_SECRET_ACCESS_KEY = &apos;REPLACE_WITH_AWS_SECRET_ACCESS_KEY&apos;
+    AWS_ACCESS_KEY_ID     = credentials(&apos;aws-access-key-id&apos;)
+    AWS_SECRET_ACCESS_KEY = credentials(&apos;aws-secret-access-key&apos;)
     PRIMARY_AI_MODEL      = &apos;amazon.nova-pro-v1:0&apos;
     JUDGE_MODEL           = &apos;anthropic.claude-3-haiku-20240307-v1:0&apos;
     JUDGE_PROVIDER        = &apos;bedrock&apos;
@@ -74,8 +76,8 @@ pipeline {
     ADMIN_USERNAME        = &apos;Admin&apos;
     ADMIN_PASSWORD        = &apos;admin123&apos;
     AWS_BEDROCK_REGION    = &apos;us-east-1&apos;
-    AWS_ACCESS_KEY_ID     = &apos;REPLACE_WITH_AWS_ACCESS_KEY_ID&apos;
-    AWS_SECRET_ACCESS_KEY = &apos;REPLACE_WITH_AWS_SECRET_ACCESS_KEY&apos;
+    AWS_ACCESS_KEY_ID     = credentials(&apos;aws-access-key-id&apos;)
+    AWS_SECRET_ACCESS_KEY = credentials(&apos;aws-secret-access-key&apos;)
     PRIMARY_AI_MODEL      = &apos;amazon.nova-pro-v1:0&apos;
     JUDGE_MODEL           = &apos;anthropic.claude-3-haiku-20240307-v1:0&apos;
     JUDGE_PROVIDER        = &apos;bedrock&apos;
@@ -154,8 +156,8 @@ pipeline {
     ADMIN_USERNAME        = &apos;Admin&apos;
     ADMIN_PASSWORD        = &apos;admin123&apos;
     AWS_BEDROCK_REGION    = &apos;us-east-1&apos;
-    AWS_ACCESS_KEY_ID     = &apos;REPLACE_WITH_AWS_ACCESS_KEY_ID&apos;
-    AWS_SECRET_ACCESS_KEY = &apos;REPLACE_WITH_AWS_SECRET_ACCESS_KEY&apos;
+    AWS_ACCESS_KEY_ID     = credentials(&apos;aws-access-key-id&apos;)
+    AWS_SECRET_ACCESS_KEY = credentials(&apos;aws-secret-access-key&apos;)
     JIRA_BASE_URL         = &apos;${JIRA_BASE_URL}&apos;
     JIRA_EMAIL            = &apos;${JIRA_EMAIL}&apos;
     JIRA_API_TOKEN        = &apos;${JIRA_API_TOKEN}&apos;
@@ -216,7 +218,7 @@ cat > /var/lib/jenkins/jenkins.model.JenkinsLocationConfiguration.xml << 'XMLEOF
 <?xml version='1.1' encoding='UTF-8'?>
 <jenkins.model.JenkinsLocationConfiguration>
   <adminAddress>nobody@nowhere</adminAddress>
-  <jenkinsUrl>http://98.81.219.145:8080/</jenkinsUrl>
+  <jenkinsUrl>http://localhost:8080/</jenkinsUrl>
 </jenkins.model.JenkinsLocationConfiguration>
 XMLEOF
 chown jenkins:jenkins /var/lib/jenkins/jenkins.model.JenkinsLocationConfiguration.xml

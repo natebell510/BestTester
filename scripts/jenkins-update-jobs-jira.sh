@@ -1,5 +1,7 @@
 #!/bin/bash
-JENKINS_PW="REPLACE_WITH_JENKINS_TOKEN"
+
+# All secrets must be provided via environment variables.
+: "${JENKINS_PW:?JENKINS_PW env var is required}"
 CLI="java -jar /home/ec2-user/jenkins-cli.jar -s http://localhost:8080 -auth admin:${JENKINS_PW}"
 
 echo "=== Updating BestTester job with Jira sync stage ==="
@@ -23,15 +25,15 @@ pipeline {
     ADMIN_USERNAME        = &apos;Admin&apos;
     ADMIN_PASSWORD        = &apos;admin123&apos;
     AWS_BEDROCK_REGION    = &apos;us-east-1&apos;
-    AWS_ACCESS_KEY_ID     = &apos;REPLACE_WITH_AWS_ACCESS_KEY_ID&apos;
-    AWS_SECRET_ACCESS_KEY = &apos;REPLACE_WITH_AWS_SECRET_ACCESS_KEY&apos;
+    AWS_ACCESS_KEY_ID     = credentials(&apos;aws-access-key-id&apos;)
+    AWS_SECRET_ACCESS_KEY = credentials(&apos;aws-secret-access-key&apos;)
     PRIMARY_AI_MODEL      = &apos;amazon.nova-pro-v1:0&apos;
     JUDGE_MODEL           = &apos;anthropic.claude-3-haiku-20240307-v1:0&apos;
     JUDGE_PROVIDER        = &apos;bedrock&apos;
     JUDGE_PASS_THRESHOLD  = &apos;3.5&apos;
-    JENKINS_URL           = &apos;http://98.81.219.145:8080&apos;
-    JENKINS_USERNAME      = &apos;admin&apos;
-    JENKINS_TOKEN         = &apos;REPLACE_WITH_JENKINS_TOKEN&apos;
+    JENKINS_URL           = credentials(&apos;jenkins-url&apos;)
+    JENKINS_USERNAME      = credentials(&apos;jenkins-username&apos;)
+    JENKINS_TOKEN         = credentials(&apos;jenkins-token&apos;)
     JIRA_BASE_URL         = &apos;${JIRA_BASE_URL}&apos;
     JIRA_EMAIL            = &apos;${JIRA_EMAIL}&apos;
     JIRA_API_TOKEN        = &apos;${JIRA_API_TOKEN}&apos;
@@ -87,15 +89,15 @@ pipeline {
     ADMIN_USERNAME        = &apos;Admin&apos;
     ADMIN_PASSWORD        = &apos;admin123&apos;
     AWS_BEDROCK_REGION    = &apos;us-east-1&apos;
-    AWS_ACCESS_KEY_ID     = &apos;REPLACE_WITH_AWS_ACCESS_KEY_ID&apos;
-    AWS_SECRET_ACCESS_KEY = &apos;REPLACE_WITH_AWS_SECRET_ACCESS_KEY&apos;
+    AWS_ACCESS_KEY_ID     = credentials(&apos;aws-access-key-id&apos;)
+    AWS_SECRET_ACCESS_KEY = credentials(&apos;aws-secret-access-key&apos;)
     PRIMARY_AI_MODEL      = &apos;amazon.nova-pro-v1:0&apos;
     JUDGE_MODEL           = &apos;anthropic.claude-3-haiku-20240307-v1:0&apos;
     JUDGE_PROVIDER        = &apos;bedrock&apos;
     JUDGE_PASS_THRESHOLD  = &apos;3.5&apos;
-    JENKINS_URL           = &apos;http://98.81.219.145:8080&apos;
-    JENKINS_USERNAME      = &apos;admin&apos;
-    JENKINS_TOKEN         = &apos;REPLACE_WITH_JENKINS_TOKEN&apos;
+    JENKINS_URL           = credentials(&apos;jenkins-url&apos;)
+    JENKINS_USERNAME      = credentials(&apos;jenkins-username&apos;)
+    JENKINS_TOKEN         = credentials(&apos;jenkins-token&apos;)
     JIRA_BASE_URL         = &apos;${JIRA_BASE_URL}&apos;
     JIRA_EMAIL            = &apos;${JIRA_EMAIL}&apos;
     JIRA_API_TOKEN        = &apos;${JIRA_API_TOKEN}&apos;

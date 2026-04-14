@@ -162,6 +162,18 @@ async function main() {
 
   console.log('\n🔄 Syncing to Jira...');
   const jira   = new JiraClient(jiraConfig);
+
+  // Create Test Execution issue (like SCRUM-8) with results table
+  const allTests = [
+    ...failures.map(f => ({ testId: f.testName.slice(0, 20), testName: f.testName, status: 'FAIL' as const, duration: f.duration })),
+    ...passedNames.map(n => ({ testId: n.slice(0, 20), testName: n, status: 'PASS' as const, duration: 0 })),
+  ];
+  const execution = await jira.createTestExecution(
+    { summary: `BestTester Playwright Run — Build #${buildNumber}`, junitPath, tests: allTests, buildUrl },
+    JIRA_KEY || undefined,
+  );
+  console.log(`   Test Execution created: ${execution.key}`);
+
   const result = await jira.syncTestFailures(failures, passedNames);
 
   // Attach JUnit XML to each newly created issue
@@ -178,6 +190,7 @@ async function main() {
       `🤖 *Playwright Test Run — Build #${buildNumber}* — ${status}`,
       `Suite: ${SUITE} | ${buildUrl}`,
       `📊 Passed: ${summary.passed} | Failed: ${summary.failed} | Skipped: ${summary.skipped}`,
+      `🧪 Test Execution: ${jiraConfig.baseUrl}/browse/${execution.key}`,
     ];
     if (result.created.length) commentLines.push(`🐛 New bugs created: ${result.created.join(', ')}`);
     if (result.updated.length) commentLines.push(`🔄 Bugs updated: ${result.updated.join(', ')}`);
@@ -222,6 +235,7 @@ async function main() {
 
   await postMessage(
     `📋 *Jira Sync* — Build #${buildNumber}\n` +
+    `Test Execution: *${execution.key}*\n` +
     `Created: ${result.created.length} | Updated: ${result.updated.length} | Closed: ${result.closed.length}\n` +
     (JIRA_KEY ? `Linked to: *${JIRA_KEY}*\n` : '') +
     `${result.created.length ? result.created.join(', ') : 'No new issues'}`,

@@ -32,3 +32,6 @@ reports/custom/
 
 # Mutation reports
 mutation/mutation-report/
+
+# Temp files
+.tmp/

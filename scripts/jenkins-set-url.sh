@@ -1,5 +1,7 @@
 #!/bin/bash
-JENKINS_PW="REPLACE_WITH_JENKINS_TOKEN"
+
+# All secrets must be provided via environment variables.
+: "${JENKINS_PW:?JENKINS_PW env var is required}"
 
 # Write Jenkins location config with localhost URL
 cat > /var/lib/jenkins/jenkins.model.JenkinsLocationConfiguration.xml << 'XMLEOF'
