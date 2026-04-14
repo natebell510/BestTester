@@ -1,15 +1,14 @@
 /**
  * @file admin.spec.ts
  * @description Regression tests for OrangeHRM Admin module.
- * @tags @regression
+ * @tags @ui @regression
  */
 import { test, expect } from '../../../src/fixtures/base.fixture';
-import { URLS, NAV } from '../../../src/constants';
+import { URLS } from '../../../src/constants';
 
-test.use({ storageState: 'auth-state/admin.json' });
+test.use({ storageState: '.auth/admin.json' });
 
-test.describe('Admin Module @regression', () => {
-
+test.describe('Admin Module @ui @regression', () => {
   test('should display admin module heading', async ({ page }) => {
     await page.goto(URLS.ADMIN);
     await expect(page.getByRole('heading', { name: 'User Management' })).toBeVisible();

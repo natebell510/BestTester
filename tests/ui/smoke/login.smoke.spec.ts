@@ -1,12 +1,12 @@
 /**
  * @file login.smoke.spec.ts
  * @description Smoke tests for OrangeHRM login functionality.
- * @tags @smoke
+ * @tags @ui @smoke
  */
 import { test, expect } from '../../../src/fixtures/base.fixture';
 import { CREDENTIALS, URLS, MESSAGES } from '../../../src/constants';
 
-test.describe('Login @smoke', () => {
+test.describe('Login @ui @smoke', () => {
   // Login tests must start unauthenticated — force a clean browser context
   test.use({ storageState: { cookies: [], origins: [] } });
 
@@ -28,7 +28,9 @@ test.describe('Login @smoke', () => {
     await expect(page.getByText(MESSAGES.REQUIRED).first()).toBeVisible();
   });
 
-  test('should redirect to login when accessing protected page unauthenticated', async ({ page }) => {
+  test('should redirect to login when accessing protected page unauthenticated', async ({
+    page,
+  }) => {
     await page.goto(URLS.EMPLOYEE_LIST);
     await expect(page).toHaveURL(/auth\/login/);
   });

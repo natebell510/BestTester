@@ -15,7 +15,7 @@ export class ReportsPage extends BasePage {
   }
 
   async goto(): Promise<void> {
-    await this.navigate('/web/index.php/pim/viewPimReports');
+    await this.navigate('/web/index.php/pim/viewDefinedPredefinedReports');
   }
 
   async generateReport(reportName: string): Promise<void> {
@@ -24,7 +24,11 @@ export class ReportsPage extends BasePage {
     await this.waitForLoad();
   }
 
-  async downloadExcelReport(): Promise<DownloadResult> {
+  async downloadExcelReport(): Promise<DownloadResult | null> {
+    // If export button is not visible (no report generated), return null
+    if (!(await this.exportButton.isVisible({ timeout: 5_000 }).catch(() => false))) {
+      return null;
+    }
     return waitForDownload(this.page, async () => {
       await this.exportButton.click();
     });

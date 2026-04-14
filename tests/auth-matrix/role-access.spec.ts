@@ -1,10 +1,10 @@
 /**
  * @file role-access.spec.ts
  * @description Parameterized multi-role access matrix — verifies each role sees correct pages/actions.
- * @tags @regression @auth-matrix
+ * @tags @auth-matrix @regression
  */
 import { test, expect } from '@playwright/test';
-import { Role, rolesConfig } from '../../src/auth/roles.config';
+import { Role } from '../../src/auth/roles.config';
 import { RoleManager } from '../../src/auth/role-manager';
 
 const BASE_URL = process.env.BASE_URL ?? 'https://opensource-demo.orangehrmlive.com';
@@ -30,7 +30,7 @@ const roleMatrix: { role: Role; canSee: string[]; cannotSee: string[] }[] = [
 test.describe.configure({ mode: 'parallel' });
 
 for (const { role, canSee, cannotSee } of roleMatrix) {
-  test.describe(`Role: ${role}`, () => {
+  test.describe(`@auth-matrix — Role: ${role}`, () => {
     test.use({
       storageState: async ({}, use) => {
         const statePath = await RoleManager.ensureAuth(role, BASE_URL);

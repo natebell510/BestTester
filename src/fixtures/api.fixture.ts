@@ -28,15 +28,13 @@ export const test = base.extend<ApiFixtures>({
     await use(api);
   },
 
-  employeeAPI: async ({ apiRequest, authAPI }, use) => {
+  employeeAPI: async ({ apiRequest }, use) => {
     const api = new EmployeeAPI(apiRequest);
-    api.setToken(await authAPI.getToken());
     await use(api);
   },
 
-  leaveAPI: async ({ apiRequest, authAPI }, use) => {
+  leaveAPI: async ({ apiRequest }, use) => {
     const api = new LeaveAPI(apiRequest);
-    api.setToken(await authAPI.getToken());
     await use(api);
   },
 });

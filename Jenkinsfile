@@ -1,3 +1,4 @@
+// Required Jenkins plugins: htmlpublisher, junit, ansicolor, timestamps, ws-cleanup
 pipeline {
   agent any
 
@@ -28,6 +29,7 @@ pipeline {
     choice(name: 'BROWSER',     choices: ['chromium', 'firefox', 'webkit'],            description: 'Browser')
     string(name: 'GREP_FILTER', defaultValue: '',                                      description: 'Optional grep filter e.g. @smoke')
     string(name: 'JIRA_KEY',    defaultValue: '',                                      description: 'Jira issue key to link test execution e.g. SCRUM-5')
+    booleanParam(name: 'REBUILD', defaultValue: false,                                 description: 'Re-run tests without checkout/setup (uses existing workspace)')
   }
 
   triggers {
@@ -47,12 +49,14 @@ pipeline {
   stages {
 
     stage('Checkout') {
+      when { expression { !params.REBUILD } }
       steps {
         checkout scm
       }
     }
 
     stage('Setup') {
+      when { expression { !params.REBUILD } }
       steps {
         sh '''
           node --version
@@ -116,33 +120,6 @@ pipeline {
       }
     }
 
-    stage('Publish Reports') {
-      steps {
-        // JUnit results
-        junit allowEmptyResults: true, testResults: 'reports/playwright-report/junit.xml'
-
-        // Playwright HTML report
-        publishHTML([
-          allowMissing:          true,
-          alwaysLinkToLastBuild: true,
-          keepAll:               true,
-          reportDir:             'reports/playwright-report',
-          reportFiles:           'index.html',
-          reportName:            'Playwright Report',
-        ])
-
-        // Allure report
-        publishHTML([
-          allowMissing:          true,
-          alwaysLinkToLastBuild: true,
-          keepAll:               true,
-          reportDir:             'reports/allure-report',
-          reportFiles:           'index.html',
-          reportName:            'Allure Report',
-        ])
-      }
-    }
-
     stage('Archive Artifacts') {
       steps {
         archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
@@ -162,6 +139,38 @@ pipeline {
 
   post {
     always {
+      // Relax CSP so HTML reports render correctly in Jenkins
+      script {
+        System.setProperty('hudson.model.DirectoryBrowserSupport.CSP', '')
+      }
+
+      // JUnit results
+      junit allowEmptyResults: true, testResults: 'reports/playwright-report/junit.xml'
+
+      // Playwright HTML report — appears in per-build sidebar
+      publishHTML([
+        allowMissing:          true,
+        alwaysLinkToLastBuild: true,
+        keepAll:               true,
+        reportDir:             'reports/playwright-report',
+        reportFiles:           'index.html',
+        reportName:            'Playwright Report',
+        reportTitles:          'Playwright Report',
+        useWrapperFileDirectly: true,
+      ])
+
+      // Allure report — appears in per-build sidebar
+      publishHTML([
+        allowMissing:          true,
+        alwaysLinkToLastBuild: true,
+        keepAll:               true,
+        reportDir:             'reports/allure-report',
+        reportFiles:           'index.html',
+        reportName:            'Allure Report',
+        reportTitles:          'Allure Report',
+        useWrapperFileDirectly: true,
+      ])
+
       script {
         def jiraArg = params.JIRA_KEY?.trim() ? params.JIRA_KEY.trim() : ''
         sh "npx ts-node -P tsconfig.json scripts/post-results-to-slack.ts ${jiraArg} || true"

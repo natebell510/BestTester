@@ -1,16 +1,15 @@
 /**
  * @file leave.spec.ts
  * @description Regression tests for OrangeHRM Leave module UI.
- * @tags @regression
+ * @tags @ui @regression
  */
 import { test, expect } from '../../../src/fixtures/base.fixture';
 import { futureDateFormatted } from '../../../src/utils/date-utils';
-import { URLS, LEAVE_TYPES, NAV } from '../../../src/constants';
+import { URLS, LEAVE_TYPES } from '../../../src/constants';
 
-test.use({ storageState: 'auth-state/admin.json' });
+test.use({ storageState: '.auth/admin.json' });
 
-test.describe('Leave Module @regression', () => {
-
+test.describe('Leave Module @ui @regression', () => {
   test('should display leave module heading', async ({ leavePage, page }) => {
     await leavePage.goto();
     await expect(page.getByRole('heading', { name: /leave/i })).toBeVisible();

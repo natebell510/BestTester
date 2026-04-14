@@ -1,15 +1,14 @@
 /**
  * @file my-info.spec.ts
  * @description Regression tests for OrangeHRM My Info module.
- * @tags @regression
+ * @tags @ui @regression
  */
 import { test, expect } from '../../../src/fixtures/base.fixture';
 import { URLS } from '../../../src/constants';
 
-test.use({ storageState: 'auth-state/admin.json' });
+test.use({ storageState: '.auth/admin.json' });
 
-test.describe('My Info @regression', () => {
-
+test.describe('My Info @ui @regression', () => {
   test('should display My Info page', async ({ page }) => {
     await page.goto(URLS.MY_INFO);
     await expect(page.getByRole('heading', { name: 'Personal Details' })).toBeVisible();
