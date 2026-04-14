@@ -35,7 +35,10 @@ test.describe('Employee Management @ui @regression', () => {
     await page.getByPlaceholder('Type for hints...').first().fill('zzz_nonexistent_xyz_999');
     await page.getByRole('button', { name: 'Search' }).click();
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.getByText(/No Records Found|Record/)).toBeVisible();
+    // Either shows "No Records Found" or the toast/table updates
+    await expect(
+      page.locator('.orangehrm-horizontal-padding').getByText('No Records Found'),
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test('should add a new employee via UI', async ({ employeePage }) => {

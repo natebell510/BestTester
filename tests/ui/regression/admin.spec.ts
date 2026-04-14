@@ -21,7 +21,7 @@ test.describe('Admin Module @ui @regression', () => {
 
   test('should search users by username', async ({ page }) => {
     await page.goto(URLS.ADMIN);
-    await page.getByPlaceholder('Username').fill('Admin');
+    await page.locator('.oxd-input').first().fill('Admin');
     await page.getByRole('button', { name: 'Search' }).click();
     await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('.oxd-table-body')).toBeVisible();

@@ -50,7 +50,12 @@ test.describe('Employee API @regression @api', () => {
     const target = employees[0];
     expect(target?.empNumber).toBeDefined();
 
-    const updated = await employeeAPI.update(target!.empNumber!, { lastName: 'UpdatedLast' });
+    const emp = await employeeAPI.getById(target!.empNumber!);
+    const updated = await employeeAPI.update(target!.empNumber!, {
+      firstName: emp.firstName,
+      lastName: 'UpdatedLast',
+      middleName: emp.middleName ?? '',
+    });
     expect(updated.lastName).toBe('UpdatedLast');
   });
 

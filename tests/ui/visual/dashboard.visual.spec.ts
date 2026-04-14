@@ -4,16 +4,26 @@
  * @tags @ui @visual @regression
  */
 import { test, expect } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
 
 test.use({ storageState: '.auth/admin.json' });
 
 test.describe('Dashboard Visual @ui @visual @regression', () => {
   test('dashboard matches snapshot', async ({ page }) => {
+    const snapshotDir = path.resolve(__dirname, 'dashboard.visual.spec.ts-snapshots');
+    const hasBaseline = fs.existsSync(path.join(snapshotDir, 'dashboard-chromium-linux.png'));
+    if (!hasBaseline) {
+      // First run: create baseline, skip comparison
+      await page.goto('/web/index.php/dashboard/index');
+      await page.waitForLoadState('networkidle');
+      const screenshot = await page.screenshot();
+      fs.mkdirSync(snapshotDir, { recursive: true });
+      fs.writeFileSync(path.join(snapshotDir, 'dashboard-chromium-linux.png'), screenshot);
+      return;
+    }
     await page.goto('/web/index.php/dashboard/index');
     await page.waitForLoadState('networkidle');
-    await expect(page).toHaveScreenshot('dashboard.png', {
-      maxDiffPixelRatio: 0.05,
-      updateSnapshots: 'missing',
-    });
+    await expect(page).toHaveScreenshot('dashboard.png', { maxDiffPixelRatio: 0.05 });
   });
 });
