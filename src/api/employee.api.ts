@@ -35,7 +35,7 @@ export class EmployeeAPI extends BaseAPI {
 
   async update(empNumber: number, payload: Partial<Employee>): Promise<Employee> {
     const res = await this.put<OrangeHRMSingleResponse<Employee>>(
-      `/web/index.php/api/v2/pim/employees/${empNumber}`,
+      `/web/index.php/api/v2/pim/employees/${empNumber}/personal-details`,
       payload,
     );
     return res.data;

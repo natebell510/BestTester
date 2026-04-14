@@ -10,6 +10,7 @@ test.describe('AI API Response Validation @ai @regression', () => {
   let llm: LLMClient;
 
   test.beforeAll(() => {
+    if (!process.env.AWS_ACCESS_KEY_ID && !process.env.AWS_BEDROCK_REGION) test.skip();
     llm = new LLMClient();
   });
 

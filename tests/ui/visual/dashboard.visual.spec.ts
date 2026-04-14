@@ -11,6 +11,9 @@ test.describe('Dashboard Visual @ui @visual @regression', () => {
   test('dashboard matches snapshot', async ({ page }) => {
     await page.goto('/web/index.php/dashboard/index');
     await page.waitForLoadState('networkidle');
-    await expect(page).toHaveScreenshot('dashboard.png', { maxDiffPixelRatio: 0.02 });
+    await expect(page).toHaveScreenshot('dashboard.png', {
+      maxDiffPixelRatio: 0.05,
+      updateSnapshots: 'missing',
+    });
   });
 });

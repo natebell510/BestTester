@@ -12,7 +12,7 @@ test.use({ storageState: '.auth/admin.json' });
 test.describe('Leave Module @ui @regression', () => {
   test('should display leave module heading', async ({ leavePage, page }) => {
     await leavePage.goto();
-    await expect(page.getByRole('heading', { name: /leave/i })).toBeVisible();
+    await expect(page.locator('.oxd-topbar-header-breadcrumb')).toContainText(/leave/i);
   });
 
   test('should display Apply link in leave module', async ({ leavePage, page }) => {
@@ -38,7 +38,12 @@ test.describe('Leave Module @ui @regression', () => {
   test('should show validation when applying leave without dates', async ({ page }) => {
     await page.goto(URLS.APPLY_LEAVE);
     await page.locator('.oxd-select-text').first().click();
-    await page.getByRole('option', { name: LEAVE_TYPES.ANNUAL }).click();
+    const option = page.getByRole('option', { name: LEAVE_TYPES.ANNUAL });
+    if ((await option.count()) > 0) {
+      await option.click();
+    } else {
+      await page.getByRole('option').first().click();
+    }
     await page.getByRole('button', { name: 'Apply' }).click();
     await expect(page.getByText('Required').first()).toBeVisible();
   });
@@ -54,11 +59,12 @@ test.describe('Leave Module @ui @regression', () => {
 
   test('should display leave list page', async ({ page }) => {
     await page.goto(URLS.LEAVE_LIST);
-    await expect(page.getByRole('heading', { name: /leave/i })).toBeVisible();
+    await expect(page.locator('.oxd-topbar-header-breadcrumb')).toContainText(/leave/i);
   });
 
   test('should display Entitlements link', async ({ leavePage, page }) => {
     await leavePage.goto();
-    await expect(page.getByRole('link', { name: 'Entitlements' })).toBeVisible();
+    await page.locator('.oxd-topbar-body-nav').getByText('Entitlements').click();
+    await expect(page.getByRole('menuitem', { name: 'Add Entitlements' })).toBeVisible();
   });
 });

@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 import pdfParse from 'pdf-parse';
@@ -11,11 +10,16 @@ import { Document, Packer, Paragraph, TextRun } from 'docx';
 
 export async function readWord(filePath: string): Promise<string> {
   // Extract raw text from docx by reading XML content
-  const { default: JSZip } = await import('jszip' as string) as { default: typeof import('jszip') };
+  const { default: JSZip } = (await import('jszip' as string)) as {
+    default: typeof import('jszip');
+  };
   const buffer = fs.readFileSync(filePath);
   const zip = await JSZip.loadAsync(buffer);
-  const xml = await zip.file('word/document.xml')?.async('string') ?? '';
-  return xml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const xml = (await zip.file('word/document.xml')?.async('string')) ?? '';
+  return xml
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export async function modifyWord(
@@ -36,12 +40,13 @@ export async function modifyWord(
   return outPath;
 }
 
-export async function readExcel(filePath: string, sheet?: string | number): Promise<Record<string, unknown>[]> {
+export async function readExcel(
+  filePath: string,
+  sheet?: string | number,
+): Promise<Record<string, unknown>[]> {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(filePath);
-  const worksheet = sheet
-    ? workbook.getWorksheet(sheet)
-    : workbook.worksheets[0];
+  const worksheet = sheet ? workbook.getWorksheet(sheet) : workbook.worksheets[0];
   if (!worksheet) throw new Error(`Worksheet not found: ${String(sheet)}`);
 
   const rows: Record<string, unknown>[] = [];
@@ -85,10 +90,14 @@ export async function verifyPDFContains(filePath: string, expectedText: string):
   return text.includes(expectedText);
 }
 
-export function generatePDF(outputPath: string, content: string): void {
-  const doc = new PDFDocument();
-  const stream = fs.createWriteStream(outputPath);
-  doc.pipe(stream);
-  doc.text(content);
-  doc.end();
+export function generatePDF(outputPath: string, content: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument();
+    const stream = fs.createWriteStream(outputPath);
+    stream.on('finish', resolve);
+    stream.on('error', reject);
+    doc.pipe(stream);
+    doc.text(content);
+    doc.end();
+  });
 }

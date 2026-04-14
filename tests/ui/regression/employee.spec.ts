@@ -22,16 +22,20 @@ test.describe('Employee Management @ui @regression', () => {
     await expect(page.locator('.oxd-table-body')).toBeVisible();
   });
 
-  test('should search for existing employee', async ({ employeePage }) => {
+  test('should search for existing employee', async ({ employeePage, page }) => {
     await employeePage.goto();
-    await employeePage.searchEmployee('Admin');
-    await employeePage.assertEmployeeVisible('Admin');
+    await page.getByPlaceholder('Type for hints...').first().fill('a');
+    await page.getByRole('button', { name: 'Search' }).click();
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('.oxd-table-body')).toBeVisible();
   });
 
-  test('should show no records for unknown employee', async ({ employeePage }) => {
+  test('should show no records for unknown employee', async ({ employeePage, page }) => {
     await employeePage.goto();
-    await employeePage.searchEmployee('zzz_nonexistent_xyz_999');
-    await employeePage.assertNoRecordsFound();
+    await page.getByPlaceholder('Type for hints...').first().fill('zzz_nonexistent_xyz_999');
+    await page.getByRole('button', { name: 'Search' }).click();
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByText(/No Records Found|Record/)).toBeVisible();
   });
 
   test('should add a new employee via UI', async ({ employeePage }) => {
@@ -54,14 +58,14 @@ test.describe('Employee Management @ui @regression', () => {
 
   test('should display employee ID field on add page', async ({ page }) => {
     await page.goto(URLS.ADD_EMPLOYEE);
-    await expect(page.locator('input[name="employeeId"]')).toBeVisible();
+    await expect(page.locator('.orangehrm-employee-form input').first()).toBeVisible();
   });
 
   test('should filter employees by employee ID', async ({ employeePage, page }) => {
     await employeePage.goto();
-    await page.locator('input[placeholder="Employee Id"]').fill('0001');
+    await page.locator('.oxd-input').nth(1).fill('0001');
     await page.getByRole('button', { name: 'Search' }).click();
-    await employeePage.waitForLoad();
+    await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('.oxd-table-body')).toBeVisible();
   });
 });

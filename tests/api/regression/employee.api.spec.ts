@@ -50,8 +50,8 @@ test.describe('Employee API @regression @api', () => {
     const target = employees[0];
     expect(target?.empNumber).toBeDefined();
 
-    const updated = await employeeAPI.update(target!.empNumber!, { firstName: 'UpdatedName' });
-    expect(updated.firstName).toBe('UpdatedName');
+    const updated = await employeeAPI.update(target!.empNumber!, { lastName: 'UpdatedLast' });
+    expect(updated.lastName).toBe('UpdatedLast');
   });
 
   test('DELETE /employees/:id — should delete employee', async ({ employeeAPI }) => {

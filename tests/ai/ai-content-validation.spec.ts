@@ -9,6 +9,9 @@ import { RUBRICS } from '../../src/ai/judge/judge-rubrics';
 import { assertNotHallucinated, assertSemanticSimilarity } from '../../src/ai/ai-assert';
 
 test.describe('AI Response Quality @ai @regression', () => {
+  test.beforeEach(() => {
+    if (!process.env.AWS_ACCESS_KEY_ID && !process.env.AWS_BEDROCK_REGION) test.skip();
+  });
 
   test('OrangeHRM chatbot response is relevant and accurate', async ({ aiClient }) => {
     const prompt = 'How do I apply for annual leave in OrangeHRM?';
@@ -21,7 +24,8 @@ test.describe('AI Response Quality @ai @regression', () => {
   });
 
   test('AI summary is grounded in source document (RAG faithfulness)', async ({ aiClient }) => {
-    const sourceDoc = 'Employees are entitled to 20 days of annual leave per year. Leave must be applied via the OrangeHRM portal at least 3 days in advance and approved by a manager.';
+    const sourceDoc =
+      'Employees are entitled to 20 days of annual leave per year. Leave must be applied via the OrangeHRM portal at least 3 days in advance and approved by a manager.';
     const summary = await aiClient.summarize(sourceDoc);
 
     await semanticExpect(summary).toBeGroundedIn(sourceDoc);
