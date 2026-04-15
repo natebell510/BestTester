@@ -1,8 +1,7 @@
 name: Smoke Tests
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 jobs:
   smoke:

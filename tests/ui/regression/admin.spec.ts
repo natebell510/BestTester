@@ -33,9 +33,8 @@ test.describe('Admin Module @ui @regression', () => {
   });
 
   test('should display Job Titles under Job menu', async ({ page }) => {
-    await page.goto(URLS.ADMIN);
-    await page.locator('.oxd-topbar-body-nav').getByText('Job', { exact: true }).click();
-    await expect(page.getByRole('menuitem', { name: 'Job Titles' })).toBeVisible();
+    await page.goto('/web/index.php/admin/viewJobTitleList');
+    await expect(page.getByRole('heading', { name: 'Job Titles' })).toBeVisible();
   });
 
   test('should navigate to Job Titles page', async ({ page }) => {

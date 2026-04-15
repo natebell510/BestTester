@@ -37,11 +37,10 @@ test.describe('Leave Module @ui @regression', () => {
   test('should show validation when submitting empty leave form', async ({ page }) => {
     await page.goto(URLS.APPLY_LEAVE);
     await page.waitForLoadState('domcontentloaded');
-    // Verify the Apply Leave form has required fields
     await expect(page.getByRole('heading', { name: 'Apply Leave' })).toBeVisible();
     await expect(page.locator('.oxd-select-text').first()).toBeVisible();
-    // Verify date inputs are present
-    await expect(page.locator('input[placeholder="yyyy-dd-mm"]').first()).toBeVisible();
+    // Verify date input is present (placeholder varies by locale)
+    await expect(page.locator('.oxd-date-input input').first()).toBeVisible();
   });
 
   test('should apply for leave successfully', async ({ leavePage }) => {
