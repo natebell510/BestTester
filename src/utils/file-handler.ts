@@ -81,9 +81,8 @@ export async function writeExcel(
 export async function readPDF(filePath: string): Promise<string> {
   const buffer = fs.readFileSync(filePath);
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require('pdf-parse');
-  const parse = typeof mod === 'function' ? mod : mod.default;
-  const result = await parse(buffer);
+  const { PDFParse } = require('pdf-parse');
+  const result = await PDFParse(buffer);
   return result.text;
 }
 

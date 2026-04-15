@@ -38,8 +38,8 @@ test.describe('Leave Module @ui @regression', () => {
   test('should show validation when applying leave without dates', async ({ page }) => {
     await page.goto(URLS.APPLY_LEAVE);
     await page.locator('.oxd-select-text').first().click();
-    // Pick the first available leave type (names vary by demo site config)
-    await page.getByRole('option').first().click();
+    await page.locator('.oxd-select-dropdown').waitFor({ state: 'visible', timeout: 5000 });
+    await page.locator('.oxd-select-option').first().click();
     await page.getByRole('button', { name: 'Apply' }).click();
     await expect(page.getByText('Required').first()).toBeVisible();
   });
