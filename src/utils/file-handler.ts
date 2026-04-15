@@ -82,17 +82,30 @@ export async function readPDF(filePath: string): Promise<string> {
   const buffer = fs.readFileSync(filePath);
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const mod = require('pdf-parse');
-  // pdf-parse exports vary by version — find the callable
-  const parse =
-    typeof mod === 'function'
-      ? mod
-      : typeof mod.default === 'function'
-        ? mod.default
-        : typeof mod.PDFParse === 'function'
-          ? mod.PDFParse
-          : Object.values(mod).find((v) => typeof v === 'function');
-  if (!parse) throw new Error('pdf-parse: no callable export found');
-  const result = await (parse as (buf: Buffer) => Promise<{ text: string }>)(buffer);
+  // pdf-parse exports vary by version — try all known shapes
+  let parse: ((buf: Buffer) => Promise<{ text: string }>) | undefined;
+  if (typeof mod === 'function') parse = mod;
+  else if (typeof mod.default === 'function') parse = mod.default;
+  else if (typeof mod.PDFParse === 'function') parse = mod.PDFParse;
+  else {
+    // Last resort: find any function export
+    for (const val of Object.values(mod)) {
+      if (typeof val === 'function' && val.length <= 2) {
+        parse = val as (buf: Buffer) => Promise<{ text: string }>;
+        break;
+      }
+    }
+  }
+  if (!parse) {
+    throw new Error(
+      `pdf-parse: no callable export found. Keys: ${Object.keys(mod).join(', ')}. Types: ${Object.entries(
+        mod,
+      )
+        .map(([k, v]) => `${k}:${typeof v}`)
+        .join(', ')}`,
+    );
+  }
+  const result = await parse(buffer);
   return result.text;
 }
 

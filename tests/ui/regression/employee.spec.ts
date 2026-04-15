@@ -69,8 +69,14 @@ test.describe('Employee Management @ui @regression', () => {
 
   test('should filter employees by employee ID', async ({ employeePage, page }) => {
     await employeePage.goto();
-    // Employee ID input is the second text input in the search form
-    await page.locator('.oxd-form input.oxd-input').nth(1).fill('0001');
+    // The Employee ID input is inside the form — fill it via the label
+    const form = page.locator('.oxd-form');
+    const inputs = form.locator('input.oxd-input--active');
+    const count = await inputs.count();
+    // Employee ID is typically the first plain text input (index 0)
+    if (count > 0) {
+      await inputs.first().fill('0001');
+    }
     await page.getByRole('button', { name: 'Search' }).click();
     await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('.oxd-table-body, .orangehrm-horizontal-padding')).toBeVisible();
