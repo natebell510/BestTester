@@ -107,7 +107,12 @@ pipeline {
             cmd = "npx playwright test"
           }
 
-          sh "npx cross-env CI=true ${cmd} --reporter=list,html,junit,allure-playwright || true"
+          // Capture exit code so build status reflects real test outcome
+          def exitCode = sh(script: "npx cross-env CI=true ${cmd} --reporter=list,html,junit,allure-playwright", returnStatus: true)
+          env.TEST_EXIT_CODE = "${exitCode}"
+          if (exitCode != 0) {
+            unstable('Tests failed — marking build UNSTABLE')
+          }
         }
       }
     }

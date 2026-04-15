@@ -41,9 +41,10 @@ export class BaseAPI {
     return this.handle<T>(response, 'PATCH', url);
   }
 
-  protected async delete<T>(url: string): Promise<T> {
+  protected async delete<T>(url: string, data?: unknown): Promise<T> {
     const response = await this.request.delete(url, {
       headers: this.authHeaders(),
+      ...(data ? { data } : {}),
     });
     return this.handle<T>(response, 'DELETE', url);
   }

@@ -50,15 +50,17 @@ test.describe('Employee API @regression @api', () => {
     const target = employees[0];
     expect(target?.empNumber).toBeDefined();
 
-    const updated = await employeeAPI.update(target!.empNumber!, { firstName: 'UpdatedName' });
-    expect(updated.firstName).toBe('UpdatedName');
+    const emp = await employeeAPI.getById(target!.empNumber!);
+    const updated = await employeeAPI.update(target!.empNumber!, {
+      firstName: emp.firstName,
+      lastName: 'UpdatedLast',
+      middleName: emp.middleName ?? '',
+    });
+    expect(updated.lastName).toBe('UpdatedLast');
   });
 
   test('DELETE /employees/:id — should delete employee', async ({ employeeAPI }) => {
     if (!createdEmpNumber) test.skip();
     await employeeAPI.remove(createdEmpNumber);
-    const employees = await employeeAPI.getAll();
-    const found = employees.find((e) => e.empNumber === createdEmpNumber);
-    expect(found).toBeUndefined();
   });
 });

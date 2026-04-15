@@ -1,10 +1,167 @@
 {
-  "timestamp": "2026-04-14T19:34:18.561Z",
-  "buildNumber": 4,
-  "buildUrl": "http://54.88.204.32:8080/job/BestTester/4/",
-  "created": [],
+  "timestamp": "2026-04-14T21:05:12.200Z",
+  "buildNumber": 10,
+  "buildUrl": "http://54.88.204.32:8080/job/BestTester/10/",
+  "created": [
+    "SCRUM-49",
+    "SCRUM-50",
+    "SCRUM-51",
+    "SCRUM-52",
+    "SCRUM-53",
+    "SCRUM-54",
+    "SCRUM-55",
+    "SCRUM-56",
+    "SCRUM-57",
+    "SCRUM-58",
+    "SCRUM-59",
+    "SCRUM-60",
+    "SCRUM-61",
+    "SCRUM-62",
+    "SCRUM-63",
+    "SCRUM-64",
+    "SCRUM-65",
+    "SCRUM-66",
+    "SCRUM-67",
+    "SCRUM-68",
+    "SCRUM-69",
+    "SCRUM-70",
+    "SCRUM-71",
+    "SCRUM-72",
+    "SCRUM-73",
+    "SCRUM-74",
+    "SCRUM-75",
+    "SCRUM-76",
+    "SCRUM-77",
+    "SCRUM-78",
+    "SCRUM-79"
+  ],
   "updated": [],
   "closed": [],
   "skipped": [],
-  "failures": []
+  "failures": [
+    {
+      "test": "ai/ai-api-response.spec.ts",
+      "error": "<![CDATA[  [chromium] › ai/ai-api-response.spec.ts:16:7 › AI API Response Validation @ai @regression › should return a non-empty string response \n\n    UnrecognizedClientException: The security token i"
+    },
+    {
+      "test": "ai/ai-api-response.spec.ts",
+      "error": "<![CDATA[  [chromium] › ai/ai-api-response.spec.ts:22:7 › AI API Response Validation @ai @regression › should return embeddings as a number array \n\n    UnrecognizedClientException: The security token "
+    },
+    {
+      "test": "ai/ai-api-response.spec.ts",
+      "error": "<![CDATA[  [chromium] › ai/ai-api-response.spec.ts:29:7 › AI API Response Validation @ai @regression › should handle long prompts without error \n\n    UnrecognizedClientException: The security token in"
+    },
+    {
+      "test": "ai/ai-content-validation.spec.ts",
+      "error": "<![CDATA[  [chromium] › ai/ai-content-validation.spec.ts:13:7 › AI Response Quality @ai @regression › OrangeHRM chatbot response is relevant and accurate \n\n    UnrecognizedClientException: The securit"
+    },
+    {
+      "test": "ai/ai-content-validation.spec.ts",
+      "error": "<![CDATA[  [chromium] › ai/ai-content-validation.spec.ts:23:7 › AI Response Quality @ai @regression › AI summary is grounded in source document (RAG faithfulness) \n\n    UnrecognizedClientException: Th"
+    },
+    {
+      "test": "ai/ai-content-validation.spec.ts",
+      "error": "<![CDATA[  [chromium] › ai/ai-content-validation.spec.ts:31:7 › AI Response Quality @ai @regression › Pairwise: Nova Pro response beats Nova Micro response \n\n    UnrecognizedClientException: The secur"
+    },
+    {
+      "test": "ai/ai-content-validation.spec.ts",
+      "error": "<![CDATA[  [chromium] › ai/ai-content-validation.spec.ts:40:7 › AI Response Quality @ai @regression › AI response should not be hallucinated — keyword check \n\n    UnrecognizedClientException: The secu"
+    },
+    {
+      "test": "ai/ai-content-validation.spec.ts",
+      "error": "<![CDATA[  [chromium] › ai/ai-content-validation.spec.ts:45:7 › AI Response Quality @ai @regression › AI response should be semantically similar to expected answer \n\n    UnrecognizedClientException: T"
+    },
+    {
+      "test": "api/regression/employee.api.spec.ts",
+      "error": "<![CDATA[  [chromium] › api/regression/employee.api.spec.ts:48:7 › Employee API @regression @api › PUT /employees/:id — should update employee \n\n    Error: PUT /web/index.php/api/v2/pim/employees/104 "
+    },
+    {
+      "test": "api/regression/leave.api.spec.ts",
+      "error": "<![CDATA[  [chromium] › api/regression/leave.api.spec.ts:24:7 › Leave API @regression @api › GET /leave-requests — should return leave requests for employee \n\n    Error: GET /web/index.php/api/v2/leav"
+    },
+    {
+      "test": "api/regression/leave.api.spec.ts",
+      "error": "<![CDATA[  [chromium] › api/regression/leave.api.spec.ts:33:7 › Leave API @regression @api › POST /leave-requests — should create a leave request \n\n    Error: POST /web/index.php/api/v2/leave/leave-re"
+    },
+    {
+      "test": "auth-matrix/role-access.spec.ts",
+      "error": "<![CDATA[  [chromium] › auth-matrix/role-access.spec.ts:42:11 › @auth-matrix — Role: Manager › can access /web/index.php/pim/viewEmployeeList \n\n    Test timeout of 60000ms exceeded while setting up \"s"
+    },
+    {
+      "test": "auth-matrix/role-access.spec.ts",
+      "error": "<![CDATA[  [chromium] › auth-matrix/role-access.spec.ts:49:11 › @auth-matrix — Role: Manager › cannot access /web/index.php/admin/viewSystemUsers \n\n    Test timeout of 60000ms exceeded while setting u"
+    },
+    {
+      "test": "auth-matrix/role-access.spec.ts",
+      "error": "<![CDATA[  [chromium] › auth-matrix/role-access.spec.ts:42:11 › @auth-matrix — Role: Employee › can access /web/index.php/pim/viewMyDetails \n\n    Test timeout of 60000ms exceeded while setting up \"sto"
+    },
+    {
+      "test": "auth-matrix/role-access.spec.ts",
+      "error": "<![CDATA[  [chromium] › auth-matrix/role-access.spec.ts:49:11 › @auth-matrix — Role: Employee › cannot access /web/index.php/admin/viewSystemUsers \n\n    Test timeout of 60000ms exceeded while setting "
+    },
+    {
+      "test": "file-ops/download.spec.ts",
+      "error": "<![CDATA[  [chromium] › file-ops/download.spec.ts:29:7 › Download Verification @regression @file-ops › should verify PDF file contains expected keywords \n\n    Error: expect(received).toBe(expected) //"
+    },
+    {
+      "test": "security/security-headers.spec.ts",
+      "error": "<![CDATA[  [chromium] › security/security-headers.spec.ts:14:7 › @security — security headers present on /web/index.php/auth/login \n\n    Error: Invalid value for content-security-policy: default-src b"
+    },
+    {
+      "test": "security/security-headers.spec.ts",
+      "error": "<![CDATA[  [chromium] › security/security-headers.spec.ts:14:7 › @security — security headers present on /web/index.php/dashboard/index \n\n    Error: Invalid value for content-security-policy: default-"
+    },
+    {
+      "test": "ui/regression/admin.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/admin.spec.ts:22:7 › Admin Module @ui @regression › should search users by username \n\n    Test timeout of 60000ms exceeded.\n\n    Error: locator.fill: Test timeout"
+    },
+    {
+      "test": "ui/regression/admin.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/admin.spec.ts:35:7 › Admin Module @ui @regression › should display Job Titles under Job menu \n\n    Test timeout of 60000ms exceeded.\n\n    Error: locator.click: Te"
+    },
+    {
+      "test": "ui/regression/admin.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/admin.spec.ts:46:7 › Admin Module @ui @regression › should display Organization menu \n\n    Error: expect(locator).toBeVisible() failed\n\n    Locator: getByRole('li"
+    },
+    {
+      "test": "ui/regression/dashboard.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/dashboard.spec.ts:17:7 › Dashboard @ui @regression › should display sidebar navigation \n\n    Error: expect(locator).toBeVisible() failed\n\n    Locator: locator('.o"
+    },
+    {
+      "test": "ui/regression/employee.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/employee.spec.ts:25:7 › Employee Management @ui @regression › should search for existing employee \n\n    Error: expect(locator).toBeVisible() failed\n\n    Locator: "
+    },
+    {
+      "test": "ui/regression/employee.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/employee.spec.ts:31:7 › Employee Management @ui @regression › should show no records for unknown employee \n\n    Error: expect(locator).toBeVisible() failed\n\n    L"
+    },
+    {
+      "test": "ui/regression/employee.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/employee.spec.ts:55:7 › Employee Management @ui @regression › should display employee ID field on add page \n\n    Error: expect(locator).toBeVisible() failed\n\n    "
+    },
+    {
+      "test": "ui/regression/employee.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/employee.spec.ts:60:7 › Employee Management @ui @regression › should filter employees by employee ID \n\n    Test timeout of 60000ms exceeded.\n\n    Error: locator.f"
+    },
+    {
+      "test": "ui/regression/leave.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/leave.spec.ts:13:7 › Leave Module @ui @regression › should display leave module heading \n\n    Error: expect(locator).toBeVisible() failed\n\n    Locator: getByRole("
+    },
+    {
+      "test": "ui/regression/leave.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/leave.spec.ts:38:7 › Leave Module @ui @regression › should show validation when applying leave without dates \n\n    Test timeout of 60000ms exceeded.\n\n    Error: l"
+    },
+    {
+      "test": "ui/regression/leave.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/leave.spec.ts:55:7 › Leave Module @ui @regression › should display leave list page \n\n    Error: expect(locator).toBeVisible() failed\n\n    Locator: getByRole('head"
+    },
+    {
+      "test": "ui/regression/leave.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/regression/leave.spec.ts:60:7 › Leave Module @ui @regression › should display Entitlements link \n\n    Error: expect(locator).toBeVisible() failed\n\n    Locator: getByRole('li"
+    },
+    {
+      "test": "ui/visual/dashboard.visual.spec.ts",
+      "error": "<![CDATA[  [chromium] › ui/visual/dashboard.visual.spec.ts:11:7 › Dashboard Visual @ui @visual @regression › dashboard matches snapshot \n\n    Error: A snapshot doesn't exist at /var/lib/jenkins/worksp"
+    }
+  ]
 }

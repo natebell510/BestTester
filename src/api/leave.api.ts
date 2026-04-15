@@ -26,18 +26,22 @@ export class LeaveAPI extends BaseAPI {
     return res.data;
   }
 
-  async createLeaveRequest(payload: LeaveRequest): Promise<LeaveRequest> {
-    const res = await this.post<OrangeHRMSingleResponse<LeaveRequest>>(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getLeaveRequests(empNumber: number): Promise<LeaveRequest[]> {
+    const res = await this.get<OrangeHRMListResponse<LeaveRequest>>(
       '/web/index.php/api/v2/leave/leave-requests',
-      payload,
     );
     return res.data;
   }
 
-  async getLeaveRequests(empNumber: number): Promise<LeaveRequest[]> {
-    const res = await this.get<OrangeHRMListResponse<LeaveRequest>>(
+  async createLeaveRequest(payload: LeaveRequest): Promise<LeaveRequest> {
+    const res = await this.post<OrangeHRMSingleResponse<LeaveRequest>>(
       '/web/index.php/api/v2/leave/leave-requests',
-      { empNumber: String(empNumber) },
+      {
+        leaveTypeId: payload.leaveTypeId,
+        fromDate: payload.fromDate,
+        toDate: payload.toDate,
+      },
     );
     return res.data;
   }

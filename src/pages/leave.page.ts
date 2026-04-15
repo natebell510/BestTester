@@ -3,15 +3,10 @@ import { BasePage } from './base.page';
 import { URLS } from '../constants';
 
 export class LeavePage extends BasePage {
-  private readonly applyLeaveLink = this.page.getByRole('link', { name: 'Apply' });
   private readonly leaveTypeDropdown = this.page.locator('.oxd-select-text').first();
   private readonly fromDateInput = this.page.locator('input[placeholder="yyyy-dd-mm"]').first();
   private readonly toDateInput = this.page.locator('input[placeholder="yyyy-dd-mm"]').last();
   private readonly applyButton = this.page.getByRole('button', { name: 'Apply' });
-  private readonly successToast = this.page.locator('.oxd-toast--success');
-  private readonly leaveTable = this.page.locator('.oxd-table-body');
-  private readonly entitlementLink = this.page.getByRole('link', { name: 'Entitlements' });
-  private readonly myLeaveLink = this.page.getByRole('link', { name: 'My Leave' });
 
   constructor(page: Page) {
     super(page);
@@ -25,32 +20,48 @@ export class LeavePage extends BasePage {
     await this.navigate(URLS.APPLY_LEAVE);
   }
 
-  async applyLeave(leaveType: string, fromDate: string, toDate: string): Promise<void> {
+  /**
+   * Applies leave if leave types are available. Returns false if no leave balance exists.
+   */
+  async applyLeave(leaveType: string, fromDate: string, toDate: string): Promise<boolean> {
     await this.navigate(URLS.APPLY_LEAVE);
+    await this.page
+      .locator('.oxd-form-loader')
+      .waitFor({ state: 'hidden', timeout: 15_000 })
+      .catch(() => {});
+
+    // Demo site may show "No Leave Types with Leave Balance" — skip gracefully
+    const noBalance = this.page.locator('text=No Leave Types with Leave Balance');
+    if (await noBalance.isVisible({ timeout: 3_000 }).catch(() => false)) return false;
+
     await this.leaveTypeDropdown.click();
-    // Pick the requested type if available, otherwise pick the first non-placeholder option
-    const option = this.page.getByRole('option', { name: leaveType });
-    if ((await option.count()) > 0) {
-      await option.click();
-    } else {
-      await this.page.getByRole('option').nth(1).click();
+    await this.page.waitForTimeout(500);
+    const specificOption = this.page.locator('.oxd-select-text-input');
+    await specificOption.fill(leaveType.substring(0, 3));
+    await this.page.waitForTimeout(500);
+    const dropdownItem = this.page
+      .locator('.oxd-select-dropdown .oxd-select-option, [role="listbox"] [role="option"]')
+      .first();
+    try {
+      await dropdownItem.click({ timeout: 3000 });
+    } catch {
+      await this.page.keyboard.press('Enter');
     }
-    // Clear and fill date inputs (OrangeHRM date fields don't clear on fill)
     await this.fromDateInput.click({ clickCount: 3 });
     await this.fromDateInput.fill(fromDate);
     await this.toDateInput.click({ clickCount: 3 });
     await this.toDateInput.fill(toDate);
     await this.applyButton.click();
-    // Accept either success or warning toast (demo site may have 0 balance)
     await expect(this.page.locator('.oxd-toast')).toBeVisible();
+    return true;
   }
 
   async assertLeaveTableVisible(): Promise<void> {
-    await expect(this.leaveTable).toBeVisible();
+    await expect(this.page.locator('.oxd-table-body')).toBeVisible();
   }
 
   async navigateToMyLeave(): Promise<void> {
-    await this.myLeaveLink.click();
+    await this.page.getByRole('link', { name: 'My Leave' }).click();
     await this.waitForLoad();
   }
 }

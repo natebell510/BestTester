@@ -21,9 +21,9 @@ test.describe('Admin Module @ui @regression', () => {
 
   test('should search users by username', async ({ page }) => {
     await page.goto(URLS.ADMIN);
-    await page.getByPlaceholder('Username').fill('Admin');
+    await page.locator('.oxd-input').first().fill('Admin');
     await page.getByRole('button', { name: 'Search' }).click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('.oxd-table-body')).toBeVisible();
   });
 
@@ -33,9 +33,8 @@ test.describe('Admin Module @ui @regression', () => {
   });
 
   test('should display Job Titles under Job menu', async ({ page }) => {
-    await page.goto(URLS.ADMIN);
-    await page.getByRole('link', { name: 'Job' }).click();
-    await expect(page.getByRole('menuitem', { name: 'Job Titles' })).toBeVisible();
+    await page.goto('/web/index.php/admin/viewJobTitleList');
+    await expect(page.getByRole('heading', { name: 'Job Titles' })).toBeVisible();
   });
 
   test('should navigate to Job Titles page', async ({ page }) => {
@@ -45,7 +44,7 @@ test.describe('Admin Module @ui @regression', () => {
 
   test('should display Organization menu', async ({ page }) => {
     await page.goto(URLS.ADMIN);
-    await expect(page.getByRole('link', { name: 'Organization' })).toBeVisible();
+    await expect(page.locator('.oxd-topbar-body-nav').getByText('Organization')).toBeVisible();
   });
 
   test('should navigate to Locations page', async ({ page }) => {

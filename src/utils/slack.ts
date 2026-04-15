@@ -1,6 +1,7 @@
 import { IncomingWebhook } from '@slack/webhook';
 import { WebClient } from '@slack/web-api';
 import { logger } from './logger';
+import { buildSlackReport } from './slack-report-template';
 
 const webhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL ?? '');
 
@@ -15,29 +16,13 @@ export interface TestSummary {
 }
 
 export async function postTestSummary(summary: TestSummary): Promise<void> {
+  const total = summary.passed + summary.failed + summary.skipped + summary.flaky;
   const status = summary.failed === 0 ? '✅' : '❌';
-  const text = [
-    `${status} *BestTester Results*`,
-    `• Passed: ${summary.passed} | Failed: ${summary.failed} | Skipped: ${summary.skipped} | Flaky: ${summary.flaky}`,
-    `• Duration: ${(summary.duration / 1000).toFixed(1)}s`,
-    summary.reportUrl ? `• <${summary.reportUrl}|View Allure Report>` : '',
-    ...(summary.topFailures?.map((f, i) => `${i + 1}. \`${f}\``) ?? []),
-  ]
-    .filter(Boolean)
-    .join('\n');
+  const fallback = `${status} BestTester Results — Total: ${total} | Passed: ${summary.passed} | Failed: ${summary.failed} | Skipped: ${summary.skipped} | Flaky: ${summary.flaky}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { blocks } = buildSlackReport(summary) as { blocks: any[] };
 
-  await webhook.send({
-    text,
-    attachments: [
-      {
-        color: summary.failed === 0 ? 'good' : 'danger',
-        actions: [
-          { type: 'button', text: 'Re-run Failed', url: process.env.JENKINS_URL ?? '#' },
-          { type: 'button', text: 'View Report', url: summary.reportUrl ?? '#' },
-        ],
-      },
-    ],
-  });
+  await webhook.send({ text: fallback, blocks });
   logger.info('Slack notification sent');
 }
 
