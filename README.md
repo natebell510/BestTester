@@ -1,7 +1,5 @@
 # BestTester
 
-[![CI](https://github.com/your-org/BestTester/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/BestTester/actions/workflows/ci.yml)
-[![Nightly](https://github.com/your-org/BestTester/actions/workflows/nightly.yml/badge.svg)](https://github.com/your-org/BestTester/actions/workflows/nightly.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20.x-brightgreen)](https://nodejs.org)
 [![Playwright](https://img.shields.io/badge/playwright-latest-blue)](https://playwright.dev)
