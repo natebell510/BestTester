@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as crypto from 'crypto';
 import { Page, Download } from '@playwright/test';
-import { readExcel, readPDF } from './file-handler';
+import { readExcel } from './excel-utils';
+import { readPDF } from './file-handler';
 
 export interface DownloadResult {
   path: string;
@@ -37,6 +38,8 @@ export function verifyFileMD5(downloadPath: string, expectedHash: string): boole
   const hash = crypto.createHash('md5').update(buffer).digest('hex');
   return hash === expectedHash;
 }
+
+export { downloadAndVerifyExcel, verifyExcelHeaders, verifyExcelRowCount } from './excel-utils';
 
 export async function verifyExcelDownload(
   downloadPath: string,

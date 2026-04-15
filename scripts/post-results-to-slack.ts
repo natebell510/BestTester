@@ -33,20 +33,24 @@ const raw = JSON.parse(fs.readFileSync(resultsPath, 'utf-8')) as {
 const { stats } = raw;
 
 const tests: TestExecutionPayload['tests'] = [];
-for (const suite of raw.suites ?? []) {
-  for (const spec of suite.specs ?? []) {
-    for (const test of spec.tests ?? []) {
-      const r = test.results?.[0];
-      const status = r?.status === 'passed' ? 'PASS' : r?.status === 'skipped' ? 'SKIP' : 'FAIL';
-      tests.push({
-        testId: spec.id ?? spec.title.slice(0, 20),
-        testName: spec.title,
-        status,
-        duration: r?.duration ?? 0,
-      });
+function collectTests(suites: any[]): void {
+  for (const suite of suites) {
+    for (const spec of suite.specs ?? []) {
+      for (const test of spec.tests ?? []) {
+        const r = test.results?.[0];
+        const status = r?.status === 'passed' ? 'PASS' : r?.status === 'skipped' ? 'SKIP' : 'FAIL';
+        tests.push({
+          testId: spec.id ?? spec.title.slice(0, 20),
+          testName: spec.title,
+          status,
+          duration: r?.duration ?? 0,
+        });
+      }
     }
+    collectTests(suite.suites ?? []);
   }
 }
+collectTests(raw.suites ?? []);
 
 async function run(): Promise<void> {
   const jira = new JiraClient(config);

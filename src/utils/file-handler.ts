@@ -81,8 +81,18 @@ export async function writeExcel(
 export async function readPDF(filePath: string): Promise<string> {
   const buffer = fs.readFileSync(filePath);
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { PDFParse } = require('pdf-parse');
-  const result = await PDFParse(buffer);
+  const mod = require('pdf-parse');
+  // pdf-parse exports vary by version — find the callable
+  const parse =
+    typeof mod === 'function'
+      ? mod
+      : typeof mod.default === 'function'
+        ? mod.default
+        : typeof mod.PDFParse === 'function'
+          ? mod.PDFParse
+          : Object.values(mod).find((v) => typeof v === 'function');
+  if (!parse) throw new Error('pdf-parse: no callable export found');
+  const result = await (parse as (buf: Buffer) => Promise<{ text: string }>)(buffer);
   return result.text;
 }
 

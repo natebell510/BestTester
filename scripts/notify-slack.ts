@@ -27,14 +27,17 @@ if (!fs.existsSync(resultsPath)) {
   process.exit(1);
 }
 
-interface PwResult {
-  suites: Array<{
+interface PwSuite {
+  title: string;
+  suites?: PwSuite[];
+  specs?: Array<{
     title: string;
-    specs: Array<{
-      title: string;
-      tests: Array<{ results: Array<{ status: string; duration: number }> }>;
-    }>;
+    tests: Array<{ results: Array<{ status: string; duration: number }> }>;
   }>;
+}
+
+interface PwResult {
+  suites: PwSuite[];
 }
 
 const raw: PwResult = JSON.parse(fs.readFileSync(resultsPath, 'utf-8'));
@@ -45,20 +48,25 @@ let skipped = 0;
 let duration = 0;
 const topFailures: string[] = [];
 
-for (const suite of raw.suites ?? []) {
-  for (const spec of suite.specs ?? []) {
-    for (const test of spec.tests ?? []) {
-      const r = test.results?.[0];
-      duration += r?.duration ?? 0;
-      if (r?.status === 'passed') passed++;
-      else if (r?.status === 'skipped') skipped++;
-      else {
-        failed++;
-        if (topFailures.length < 5) topFailures.push(spec.title);
+function walkSuites(suites: PwSuite[]): void {
+  for (const suite of suites) {
+    for (const spec of suite.specs ?? []) {
+      for (const test of spec.tests ?? []) {
+        const r = test.results?.[0];
+        duration += r?.duration ?? 0;
+        if (r?.status === 'passed') passed++;
+        else if (r?.status === 'skipped') skipped++;
+        else {
+          failed++;
+          if (topFailures.length < 5) topFailures.push(spec.title);
+        }
       }
     }
+    walkSuites(suite.suites ?? []);
   }
 }
+
+walkSuites(raw.suites ?? []);
 
 const total = passed + failed + skipped;
 const icon = failed === 0 ? '✅' : '❌';
