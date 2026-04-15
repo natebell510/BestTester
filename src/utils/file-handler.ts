@@ -79,34 +79,14 @@ export async function writeExcel(
 }
 
 export async function readPDF(filePath: string): Promise<string> {
-  const buffer = fs.readFileSync(filePath);
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require('pdf-parse');
-  // pdf-parse exports vary by version — try all known shapes
-  let parse: ((buf: Buffer) => Promise<{ text: string }>) | undefined;
-  if (typeof mod === 'function') parse = mod;
-  else if (typeof mod.default === 'function') parse = mod.default;
-  else if (typeof mod.PDFParse === 'function') parse = mod.PDFParse;
-  else {
-    // Last resort: find any function export
-    for (const val of Object.values(mod)) {
-      if (typeof val === 'function' && val.length <= 2) {
-        parse = val as (buf: Buffer) => Promise<{ text: string }>;
-        break;
-      }
-    }
-  }
-  if (!parse) {
-    throw new Error(
-      `pdf-parse: no callable export found. Keys: ${Object.keys(mod).join(', ')}. Types: ${Object.entries(
-        mod,
-      )
-        .map(([k, v]) => `${k}:${typeof v}`)
-        .join(', ')}`,
-    );
-  }
-  const result = await parse(buffer);
-  return result.text;
+  // Extract text from PDF by scanning raw buffer for text streams
+  const raw = fs.readFileSync(filePath, 'latin1');
+  const matches = raw.match(/\(([^)]+)\)/g) ?? [];
+  return matches
+    .map((m) => m.slice(1, -1))
+    .join(' ')
+    .replace(/\\n/g, '\n')
+    .trim();
 }
 
 export async function verifyPDFContains(filePath: string, expectedText: string): Promise<boolean> {
