@@ -37,13 +37,8 @@ test.describe('Leave Module @ui @regression', () => {
   test('should show validation when submitting empty leave form', async ({ page }) => {
     await page.goto(URLS.APPLY_LEAVE);
     await page.waitForLoadState('domcontentloaded');
-    // Submit the form without filling anything
-    const submitBtn = page.locator('button[type="submit"]');
-    if ((await submitBtn.count()) > 0) {
-      await submitBtn.click();
-    } else {
-      await page.locator('.oxd-form').locator('button').last().click();
-    }
+    // The Apply Leave page has an "Apply" button
+    await page.getByRole('button', { name: 'Apply' }).click();
     await expect(page.getByText('Required').first()).toBeVisible();
   });
 

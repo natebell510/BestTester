@@ -1,7 +1,7 @@
 import { IncomingWebhook } from '@slack/webhook';
 import { WebClient } from '@slack/web-api';
 import { logger } from './logger';
-import { buildSlackReport } from '../../reports/custom/slack-report-template';
+import { buildSlackReport } from './slack-report-template';
 
 const webhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL ?? '');
 
@@ -19,7 +19,7 @@ export async function postTestSummary(summary: TestSummary): Promise<void> {
   const total = summary.passed + summary.failed + summary.skipped + summary.flaky;
   const status = summary.failed === 0 ? '✅' : '❌';
   const fallback = `${status} BestTester Results — Total: ${total} | Passed: ${summary.passed} | Failed: ${summary.failed} | Skipped: ${summary.skipped} | Flaky: ${summary.flaky}`;
-  const { blocks } = buildSlackReport(summary) as { blocks: any[] };
+  const { blocks } = buildSlackReport(summary) as { blocks: unknown[] };
 
   await webhook.send({ text: fallback, blocks });
   logger.info('Slack notification sent');
