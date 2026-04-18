@@ -111,7 +111,7 @@ BestTester/
 │   ├── pages/               # Page Object Model (login, dashboard, employee, leave, reports)
 │   ├── security/            # SQLi/XSS fuzzer, security header validator, OWASP ZAP client
 │   ├── types/               # TypeScript interfaces (API responses, config, employee, Jira)
-│   └── utils/               # Logger (Winston), Slack, Jenkins, Jira, file-handler, download-verifier, Excel, webhook
+│   └── utils/               # Logger (Winston), Slack, Jenkins, 1Password, Jira, file-handler, download-verifier, Excel, webhook
 ├── tests/
 │   ├── ai/                  # AI/LLM response validation and content tests
 │   ├── api/smoke/           # API smoke tests
@@ -373,11 +373,55 @@ Then register in `src/fixtures/base.fixture.ts`.
 | Data | Faker.js, ExcelJS, pdf-parse, PDFKit, docx |
 | CI/CD | GitHub Actions, Jenkins |
 | Reporting | Allure, Playwright HTML, JUnit XML |
-| Integrations | Jira (REST API), Slack (Webhooks + Web API), GitHub API |
+| Integrations | Jira (REST API), Slack (Webhooks + Web API), GitHub API, 1Password CLI |
 | Code quality | ESLint, Prettier, Husky, lint-staged |
 | Mutation testing | Stryker Mutator |
 | Logging | Winston |
 | Version control | simple-git |
+| Secret management | 1Password CLI (`op`) |
+
+---
+
+## 1Password Integration
+
+Securely manage secrets via the [1Password CLI](https://developer.1password.com/docs/cli/get-started) instead of storing them in `.env`.
+
+1. Install the 1Password CLI (`op`): https://developer.1password.com/docs/cli/get-started
+2. Create a [Service Account](https://developer.1password.com/docs/service-accounts) and paste the token into `OP_SERVICE_ACCOUNT_TOKEN` in `.env`
+3. Use the `OnePassword` utility in global-setup, fixtures, or scripts:
+
+```typescript
+import { OnePassword } from '@utils/one-password';
+
+const op = new OnePassword('BestTester'); // vault name
+
+// Inject all fields from a vault item into process.env
+op.injectEnv('BestTester Secrets');
+
+// Or map specific fields to env vars
+op.injectEnv('BestTester Secrets', {
+  SLACK_BOT_TOKEN: 'Slack Bot Token',
+  JIRA_API_TOKEN: 'Jira API Token',
+  AWS_SECRET_ACCESS_KEY: 'AWS Secret Key',
+});
+
+// Create a new secret
+op.createItem('API Credentials', { apiKey: 'sk-abc123' });
+
+// Update an existing field
+op.setField('BestTester Secrets', 'GitHub Token', 'ghp_new...');
+```
+
+| Method | Description |
+|---|---|
+| `getField(item, field)` | Read a single secret value |
+| `getItem(item)` | Read all fields from an item |
+| `listItems()` | List all vault items |
+| `createItem(title, fields)` | Create a new item |
+| `setField(item, field, value)` | Update a field on an existing item |
+| `deleteItem(item)` | Delete an item |
+| `injectEnv(item, mapping?)` | Bulk-inject fields into `process.env` |
+| `whoAmI()` | Verify CLI authentication |
 
 ---
 
