@@ -2,10 +2,7 @@ node_modules/
 dist/
 .env
 config/environments/*.env
-reports/allure-results/
-reports/allure-report/
-reports/playwright-report/
-reports/suggestions/
+reports/
 test-results/
 playwright/.cache/
 *.log
@@ -26,9 +23,6 @@ ec2-instance.json
 # Root-level report output
 playwright-report/
 
-# Judge logs
-reports/judge-logs/
-reports/custom/
 
 # Mutation reports
 mutation/mutation-report/
