@@ -1,7 +1,8 @@
 {
   "name": "besttester",
-  "version": "1.0.0",
-  "description": "Production-grade Playwright + TypeScript QE framework for UI, API, and AI testing",
+  "version": "1.0.1",
+  "description": "Production-grade Playwright + TypeScript QE framework for UI, API, mobile, and AI testing",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=20.x"
   },
@@ -18,6 +19,7 @@
     "test:security": "playwright test --config config/playwright.config.ts --grep \"@security\"",
     "test:i18n": "playwright test --config config/playwright.config.ts --grep \"@i18n\"",
     "test:auth-matrix": "playwright test --config config/playwright.config.ts --grep \"@auth-matrix\"",
+    "test:mobile": "playwright test --config config/playwright.mobile.config.ts --grep \"@mobile\"",
     "test:headed": "playwright test --config config/playwright.config.ts --headed",
     "test:debug": "playwright test --config config/playwright.config.ts --debug",
     "lint": "eslint .",

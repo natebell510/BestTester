@@ -1,13 +1,13 @@
 # BestTester
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20.x-brightgreen)](https://nodejs.org)
 [![Playwright](https://img.shields.io/badge/playwright-latest-blue)](https://playwright.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6)](https://www.typescriptlang.org)
 [![AWS Bedrock](https://img.shields.io/badge/AWS_Bedrock-AI_Testing-FF9900)](https://aws.amazon.com/bedrock/)
 [![MCP](https://img.shields.io/badge/MCP-Model_Context_Protocol-purple)](https://modelcontextprotocol.io)
 
-> **Production-grade, plug-and-play Playwright + TypeScript QE framework** for UI, API, AI-powered, security, i18n, and file-operations testing — with built-in CI/CD, AI agents, LLM-as-Judge evaluation, MCP server, Jenkins orchestration, Jira sync, and Slack reporting.
+> **Production-grade, plug-and-play Playwright + TypeScript QE framework** for UI, API, mobile, AI-powered, security, i18n, and file-operations testing — with built-in CI/CD, AI agents, LLM-as-Judge evaluation, MCP server, Jenkins orchestration, Jira sync, and Slack reporting.
 
 ---
 
@@ -23,6 +23,7 @@
 | **7 CLI agents** | Code review, test healer, suggestion generator, Jenkins trigger, Jira sync, Slack bot, run-and-report — all from the terminal |
 | **Security testing** | SQLi/XSS fuzzer, security header validator, OWASP ZAP proxy integration |
 | **Multi-environment** | `TEST_ENV=dev|staging|prod` with per-environment `.env` files |
+| **Mobile testing** | Dedicated mobile test suite with device emulation (Pixel 5, iPhone 13, iPad), touch/swipe helpers, responsive assertions |
 | **Multi-browser** | Chromium, Firefox, WebKit, mobile Chrome, mobile Safari via `ALL_BROWSERS=true` |
 | **Mutation testing** | Stryker Mutator with configurable thresholds and HTML/JSON reports |
 | **Full CI/CD** | 10 GitHub Actions workflows: CI, nightly, smoke, PR gate, security scan, mutation, AI tests, API tests, report publishing, Copilot review |
@@ -45,14 +46,14 @@
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                          BestTester                              │
-├──────────┬──────────┬──────────┬──────────┬──────────┬───────────┤
-│ UI Tests │ API Tests│ AI Tests │ Security │  i18n    │ File-Ops  │
-│(Playwright│(Axios/PW)│(Bedrock) │(ZAP/Fuzz)│(Locale)  │(xlsx/pdf) │
+├─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬──────────┤
+│UI Tests │API Tests│ Mobile  │AI Tests │Security │  i18n   │ File-Ops │
+│(PW)     │(Axios)  │(Emulate)│(Bedrock)│(ZAP)    │(Locale) │(xlsx/pdf)│
 ├──────────┴──────────┴──────────┴──────────┴──────────┴───────────┤
 │  Page Object Model (src/pages/)    │  API Layer (src/api/)       │
-│  AI Helpers (src/ai/)              │  Security (src/security/)   │
-│  Fixtures (src/fixtures/)          │  Data Factories (src/data/) │
-│  Utils (src/utils/)                │  i18n (src/i18n/)           │
+│  Mobile Pages (src/mobile/)        │  Security (src/security/)   │
+│  AI Helpers (src/ai/)              │  Data Factories (src/data/) │
+│  Fixtures (src/fixtures/)          │  i18n (src/i18n/)           │
 ├──────────────────────────────────────────────────────────────────┤
 │  AI: LLM Client │ AI Assert │ Semantic Assert │ LLM Judge       │
 │      AI Locator │ Embeddings (Titan) │ MCP Server (stdio/SSE)   │
@@ -106,8 +107,9 @@ BestTester/
 │   ├── components/          # Reusable UI components (form, modal, navbar, table)
 │   ├── constants/           # Shared constants
 │   ├── data/                # Test data factories (Faker) + teardown registry
-│   ├── fixtures/            # Custom Playwright fixtures (base, api, auth)
+│   ├── fixtures/            # Custom Playwright fixtures (base, api, auth, mobile)
 │   ├── i18n/                # Locale switcher, RTL detection, string validator
+│   ├── mobile/              # Mobile page objects (BaseMobilePage + login, products, cart)
 │   ├── pages/               # Page Object Model (login, dashboard, employee, leave, reports)
 │   ├── security/            # SQLi/XSS fuzzer, security header validator, OWASP ZAP client
 │   ├── types/               # TypeScript interfaces (API responses, config, employee, Jira)
@@ -119,6 +121,7 @@ BestTester/
 │   ├── auth-matrix/         # Multi-role access control tests
 │   ├── file-ops/            # File download, Excel, Word, PDF tests
 │   ├── i18n/                # Internationalization smoke tests
+│   ├── mobile/              # Mobile device emulation tests (login, products, responsive)
 │   ├── security/            # Security header and penetration tests
 │   ├── ui/smoke/            # UI smoke suite (@smoke)
 │   ├── ui/regression/       # UI regression suite (@regression)
@@ -141,6 +144,7 @@ npm test
 npm run test:ui              # UI tests
 npm run test:api             # API tests
 npm run test:ai              # AI/LLM tests
+npm run test:mobile          # Mobile device emulation tests
 npm run test:file-ops        # File operation tests
 npm run test:security        # Security tests
 npm run test:i18n            # Internationalization tests
@@ -172,6 +176,16 @@ TEST_ENV=prod npm test
 
 ```bash
 ALL_BROWSERS=true npm test   # Chromium + Firefox + WebKit + mobile Chrome + mobile Safari
+```
+
+### Mobile Testing
+
+```bash
+npm run test:mobile                              # Pixel 5 + iPhone 13
+npm run test:mobile -- --project mobile-chrome   # Android only
+npm run test:mobile -- --project mobile-safari   # iOS only
+MOBILE_TABLET=true npm run test:mobile           # Include iPad
+npm run test:mobile -- --headed                  # Watch execution
 ```
 
 ---
@@ -288,6 +302,49 @@ npx ts-node agents/slack-bot-agent.ts --report reports/playwright-report/results
 
 ---
 
+## Mobile Testing
+
+Dedicated mobile test suite using Playwright device emulation against [SauceDemo](https://www.saucedemo.com) — a free, publicly available e-commerce demo app.
+
+**Device profiles:**
+| Project | Device | Viewport | Touch |
+|---|---|---|---|
+| `mobile-chrome` | Pixel 5 | 393×851 | ✓ |
+| `mobile-safari` | iPhone 13 | 390×844 | ✓ |
+| `tablet` | iPad (gen 7) | 810×1080 | ✓ |
+
+**Mobile page objects** extend `BaseMobilePage` which provides:
+- `swipe(direction, distance)` — simulate touch swipe gestures
+- `tap(selector)` — touch tap interaction
+- `isResponsive()` — assert viewport is mobile-sized (<768px)
+- `getViewportSize()` — retrieve current device dimensions
+
+**Test coverage:**
+- Login flows (valid, invalid, locked user)
+- Product browsing and cart management
+- Responsive layout assertions
+- Burger menu navigation
+- Touch scroll interactions
+
+### Adding a Mobile Page Object
+
+```typescript
+import { Page } from '@playwright/test';
+import { BaseMobilePage } from './base-mobile.page';
+
+export class MobileCheckoutPage extends BaseMobilePage {
+  private readonly firstNameInput = this.page.locator('[data-test="firstName"]');
+
+  constructor(page: Page) { super(page); }
+
+  async fillName(name: string): Promise<void> { await this.firstNameInput.fill(name); }
+}
+```
+
+Then register in `src/fixtures/mobile.fixture.ts`.
+
+---
+
 ## Security Testing
 
 - **SQLi/XSS fuzzer** — automated form fuzzing with common injection payloads, validates no 500 errors or reflected XSS
@@ -366,6 +423,7 @@ Then register in `src/fixtures/base.fixture.ts`.
 | Category | Technologies |
 |---|---|
 | Test framework | Playwright, TypeScript |
+| Mobile testing | Playwright device emulation (Pixel 5, iPhone 13, iPad) |
 | AI/LLM | AWS Bedrock (Nova Pro, Claude Haiku, Titan Embeddings), OpenAI |
 | MCP | @modelcontextprotocol/sdk (stdio + SSE) |
 | API testing | Axios, Zod schema validation |
@@ -441,10 +499,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 ## Keywords
 
-`playwright`, `typescript`, `test-automation`, `e2e-testing`, `api-testing`, `ai-testing`, `llm-testing`, `aws-bedrock`, `page-object-model`, `playwright-typescript`, `playwright-framework`, `playwright-boilerplate`, `playwright-template`, `test-framework`, `qa-automation`, `qe-framework`, `selenium-alternative`, `ui-testing`, `visual-regression`, `security-testing`, `owasp-zap`, `mutation-testing`, `stryker`, `allure-report`, `ci-cd`, `github-actions`, `jenkins`, `jira-integration`, `slack-bot`, `mcp`, `model-context-protocol`, `llm-as-judge`, `ai-assertions`, `semantic-testing`, `hallucination-detection`, `cross-browser-testing`, `i18n-testing`, `data-factory`, `test-data-management`, `download-verification`, `excel-testing`, `pdf-testing`, `playwright-best-practices`, `playwright-page-object`, `playwright-fixtures`, `playwright-ci-cd`, `playwright-ai`, `bedrock-testing`, `nova-pro`, `claude-haiku`, `titan-embeddings`
+`playwright`, `typescript`, `test-automation`, `e2e-testing`, `api-testing`, `ai-testing`, `llm-testing`, `aws-bedrock`, `page-object-model`, `playwright-typescript`, `playwright-framework`, `playwright-boilerplate`, `playwright-template`, `test-framework`, `qa-automation`, `qe-framework`, `selenium-alternative`, `ui-testing`, `visual-regression`, `security-testing`, `owasp-zap`, `mutation-testing`, `stryker`, `allure-report`, `ci-cd`, `github-actions`, `jenkins`, `jira-integration`, `slack-bot`, `mcp`, `model-context-protocol`, `llm-as-judge`, `ai-assertions`, `semantic-testing`, `hallucination-detection`, `cross-browser-testing`, `i18n-testing`, `mobile-testing`, `device-emulation`, `responsive-testing`, `touch-testing`, `data-factory`, `test-data-management`, `download-verification`, `excel-testing`, `pdf-testing`, `playwright-best-practices`, `playwright-page-object`, `playwright-fixtures`, `playwright-ci-cd`, `playwright-ai`, `bedrock-testing`, `nova-pro`, `claude-haiku`, `titan-embeddings`
 
 ---
 
 ## License
 
-MIT
+Apache License 2.0 — see [LICENSE](LICENSE) for details.
+
+You are free to use, modify, and distribute this framework in personal and commercial projects. Contributions are welcome and will be licensed under the same terms.
