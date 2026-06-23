@@ -32,6 +32,7 @@
     "format": "prettier --write .",
     "report:allure": "allure generate allure-results --clean -o allure-report && allure open",
     "report:playwright": "playwright show-report --config config/playwright.config.ts",
+    "report:dashboard": "ts-node scripts/generate-dashboard.ts",
     "agent:review": "ts-node agents/code-review-agent.ts",
     "agent:heal": "ts-node agents/test-healer-agent.ts",
     "agent:suggest": "ts-node agents/suggestion-agent.ts",
