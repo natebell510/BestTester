@@ -1,0 +1,59 @@
+[source]
+name = "BestTester Secret Scanning"
+description = "Gitleaks configuration for BestTester"
+
+[rules.slack-token]
+description = "Slack Bot Token"
+regex = '''xoxb-[0-9]{10,13}-[0-9]{10,13}-[0-9]{24}'''
+secretGroup = 0
+
+[rules.github-token]
+description = "GitHub Personal Access Token"
+regex = '''ghp_[0-9a-zA-Z]{36}'''
+secretGroup = 0
+
+[rules.aws-key]
+description = "AWS Access Key"
+regex = '''(AKIA|ASIA)[0-9A-Z]{16}'''
+secretGroup = 0
+
+[rules.private-key]
+description = "Private Key"
+regex = '''-----BEGIN (RSA|DSA|EC|PGP|OPENSSH) PRIVATE KEY'''
+secretGroup = 0
+
+[rules.api-key]
+description = "Generic API Key Pattern"
+regex = '''api[_-]?key\s*[:=]\s*['\"]?[a-zA-Z0-9_\-]{20,}['\"]?'''
+secretGroup = 0
+keywords = ["api_key", "apikey", "api-key"]
+
+[rules.database-url]
+description = "Database Connection String"
+regex = '''(mysql|postgres|mongodb)://[a-zA-Z0-9_\-:.@/]+'''
+secretGroup = 0
+
+[rules.jwt-token]
+description = "JWT Token"
+regex = '''eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'''
+secretGroup = 0
+
+[allowlist]
+paths = [
+    "node_modules",
+    ".git",
+    ".github",
+    "dist",
+    "build",
+    "reports",
+    ".next",
+    "coverage",
+    "test-results",
+]
+
+# Allow test data and examples that may contain patterns
+paths-regex = [
+    "tests/.*fixtures.*",
+    "examples/.*",
+    ".*\\.example\\..*",
+]

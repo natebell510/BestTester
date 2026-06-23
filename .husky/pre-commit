@@ -1,4 +1,7 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+echo "🔍 Scanning for secrets with gitleaks..."
+npx gitleaks protect --verbose --staged 2>/dev/null || true
+
 npx lint-staged

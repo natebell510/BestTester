@@ -51,6 +51,7 @@
     "jenkins:single-test": "ts-node scripts/trigger-single-test.ts",
     "jenkins:push-jobs": "bash scripts/push-single-test-job.sh",
     "typecheck": "tsc --noEmit",
+    "security:audit": "ts-node scripts/security-audit.ts",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -93,10 +94,13 @@
     "allure-commandline": "latest",
     "allure-playwright": "latest",
     "axe-playwright": "^2.2.2",
+    "detect-secrets": "^1.0.6",
     "eslint": "latest",
     "eslint-plugin-playwright": "^2.10.4",
     "eslint-plugin-security": "^4.0.1",
+    "gitleaks": "^1.0.0",
     "husky": "latest",
+    "license-checker": "^25.0.1",
     "lint-staged": "latest",
     "prettier": "latest",
     "standard-version": "latest",
