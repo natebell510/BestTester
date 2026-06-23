@@ -1,0 +1,55 @@
+{
+  "title": "BestTester",
+  "tagline": "Production-grade Playwright + TypeScript QE framework for UI, API, mobile, and AI testing",
+  "url": "https://yourusername.github.io",
+  "baseUrl": "/besttester/",
+  "projectName": "besttester",
+  "organizationName": "yourusername",
+  "docs": {
+    "sidebars": {
+      "tutorialSidebar": [
+        {
+          "type": "category",
+          "label": "Getting Started",
+          "items": [
+            "getting-started/quickstart",
+            "getting-started/installation",
+            "getting-started/first-test"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "Guides",
+          "items": [
+            "guides/architecture",
+            "guides/test-writing",
+            "guides/ai-testing",
+            "guides/ci-cd-integration",
+            "guides/kubernetes"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "Examples",
+          "items": [
+            "examples/ui-patterns",
+            "examples/api-patterns",
+            "examples/ai-patterns",
+            "examples/security-patterns"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "Reference",
+          "items": [
+            "reference/api",
+            "reference/fixtures",
+            "reference/helpers"
+          ]
+        },
+        "contributing",
+        "changelog"
+      ]
+    }
+  }
+}
