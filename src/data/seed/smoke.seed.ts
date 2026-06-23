@@ -1,5 +1,5 @@
 import { APIRequestContext } from '@playwright/test';
-import { EmployeeFactory } from './factory/employee.factory';
+import { EmployeeFactory } from '../factory/employee.factory';
 
 /**
  * Minimal data set pre-populated in globalSetup for smoke tests.

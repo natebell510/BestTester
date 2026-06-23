@@ -14,7 +14,7 @@ export function generateEmail(): string {
 }
 
 export function generateUsername(): string {
-  return faker.internet.username();
+  return faker.internet.userName();
 }
 
 export function generatePassword(): string {

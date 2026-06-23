@@ -1,23 +1,24 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { getConfig } from '../src/config/config';
 
-const dotenvOpts = { debug: false, log: { warn: () => {}, info: () => {}, debug: () => {} } };
-dotenv.config({ ...dotenvOpts, path: path.resolve(__dirname, '../.env'), override: true });
+dotenv.config({ path: path.resolve(__dirname, '../.env'), override: true });
 
 const ENV = process.env.TEST_ENV ?? 'dev';
 dotenv.config({
-  ...dotenvOpts,
   path: path.resolve(__dirname, `environments/${ENV}.env`),
   override: false,
 });
 
+const config = getConfig();
+
 export default defineConfig({
   testDir: '../tests',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 4 : 1,
+  forbidOnly: !!config.ci,
+  retries: config.ci ? 1 : 0,
+  workers: config.ci ? 4 : 1,
   timeout: 60_000,
   expect: { timeout: 10_000 },
 
@@ -26,7 +27,7 @@ export default defineConfig({
       'html',
       {
         outputFolder: '../reports/playwright-report',
-        open: process.env.CI ? 'never' : 'on-failure',
+        open: config.ci ? 'never' : 'on-failure',
       },
     ],
     ['json', { outputFile: '../reports/playwright-report/results.json' }],
@@ -37,12 +38,12 @@ export default defineConfig({
 
   use: {
     ...devices['Desktop Chrome'],
-    headless: process.env.HEADLESS !== 'false',
-    baseURL: process.env.BASE_URL ?? 'https://opensource-demo.orangehrmlive.com',
+    headless: config.headless,
+    baseURL: config.baseUrl,
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
     trace: 'on-first-retry',
-    storageState: process.env.STORAGE_STATE ?? undefined,
+    storageState: config.storageState ?? undefined,
   },
 
   globalSetup: './global-setup.ts',
@@ -57,7 +58,7 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
       dependencies: ['setup'],
     },
-    ...(process.env.ALL_BROWSERS
+    ...(config.allBrowsers
       ? [
           {
             name: 'firefox',

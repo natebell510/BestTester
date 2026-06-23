@@ -19,6 +19,7 @@ Thumbs.db
 *.pem
 ec2-instance.json
 .auth/
+CLAUDE.md
 
 # Root-level report output
 playwright-report/
