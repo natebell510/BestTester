@@ -149,6 +149,7 @@ npm run test:file-ops        # File operation tests
 npm run test:security        # Security tests
 npm run test:i18n            # Internationalization tests
 npm run test:auth-matrix     # Multi-role auth tests
+npm run test:contracts       # Consumer-driven contract tests (Pact)
 
 # By tag
 npm run test:smoke           # @smoke
@@ -337,6 +338,43 @@ npm run agent:run-and-report -- --suite regression --jira-key SCRUM-5 --dry-run
 ```bash
 npx ts-node agents/slack-bot-agent.ts --report reports/playwright-report/results.json
 ```
+
+---
+
+## Contract Testing
+
+Consumer-driven contract testing using Pact to catch API breaking changes before they reach E2E tests.
+
+**Available contracts:**
+| Contract | Endpoints | Tests |
+|---|---|---|
+| `auth.contract.spec.ts` | Login, token validation, auth errors | 3 |
+| `employee.contract.spec.ts` | CRUD operations on employees | 5 |
+| `leave.contract.spec.ts` | Leave types, requests, validation | 4 |
+
+**Running contract tests:**
+```bash
+# Run all contracts
+npm run test:contracts
+
+# Run specific contract
+npm run test:contracts -- --grep "Employee API Contract"
+
+# Publish to Pact broker (CI only)
+PACT_BROKER_URL=https://pact-broker.example.com npm run test:contracts
+```
+
+**Pact configuration** (`pact.config.ts`):
+- Consumer: `BestTester`
+- Providers: OrangeHRM-Auth, OrangeHRM-Employee, OrangeHRM-Leave
+- Broker: self-hosted or PactFlow
+- Pact files stored in: `./pacts/`
+
+**Workflow:**
+1. Consumer runs contract tests → generates Pact files
+2. Pact files published to broker
+3. Provider verifies contracts against its implementation
+4. CI blocks deployment if verification fails
 
 ---
 

@@ -32,6 +32,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*", "tests/**/*", "agents/**/*", "config/**/*", "reports/**/*", "scripts/**/*", "mutation/**/*", "mcp/**/*"],
+  "include": ["src/**/*", "tests/**/*", "agents/**/*", "config/**/*", "reports/**/*", "scripts/**/*", "mutation/**/*", "mcp/**/*", "pact.config.ts"],
   "exclude": ["node_modules", "dist", "mutation"]
 }
