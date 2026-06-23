@@ -1,0 +1,46 @@
+namespace: besttester
+testSuite: smoke
+workers: 4
+backoffLimit: 3
+ttlSecondsAfterFinished: 86400
+runId: ""
+
+image:
+  repository: docker.io/yourusername/besttester
+  tag: latest
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+baseUrl: http://localhost:3000
+apiBaseUrl: http://localhost:3001
+adminUsername: admin
+testTimeout: "30000"
+retryAttempts: "3"
+logLevel: info
+reportFormat: json
+traceEnabled: "true"
+otelCollectorEndpoint: http://otel-collector:4317
+
+adminPassword: changeme
+databaseUrl: postgresql://localhost:5432/test
+databasePassword: changeme
+anthropicApiKey: ""
+slackWebhookUrl: ""
+authToken: ""
+
+reports:
+  pvc:
+    enabled: true
+    size: 10Gi
+    storageClass: standard
+
+affinity:
+  enabled: true
+  spreadAcrossNodes: true

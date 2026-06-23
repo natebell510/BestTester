@@ -1,0 +1,17 @@
+{{- if .Values.reports.pvc.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: besttester-reports
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: besttester
+    version: {{ .Chart.AppVersion }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: {{ .Values.reports.pvc.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.reports.pvc.size }}
+{{- end }}

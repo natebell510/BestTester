@@ -1,0 +1,105 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: besttester-{{ .Values.testSuite }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: besttester
+    test-suite: {{ .Values.testSuite }}
+    version: {{ .Chart.AppVersion }}
+    run-id: {{ .Values.runId | default (now | date "20060102150405") }}
+spec:
+  parallelism: {{ .Values.workers }}
+  completions: {{ .Values.workers }}
+  backoffLimit: {{ .Values.backoffLimit }}
+  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        app: besttester
+        test-suite: {{ .Values.testSuite }}
+        run-id: {{ .Values.runId | default (now | date "20060102150405") }}
+    spec:
+      serviceAccountName: besttester
+      restartPolicy: Never
+      containers:
+      - name: tester
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+        env:
+        - name: WORKER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: WORKER_COUNT
+          value: "{{ .Values.workers }}"
+        - name: TEST_SUITE
+          value: "{{ .Values.testSuite }}"
+
+        envFrom:
+        - configMapRef:
+            name: besttester-config
+        - secretRef:
+            name: besttester-secrets
+            optional: true
+
+        resources:
+          requests:
+            memory: "{{ .Values.resources.requests.memory }}"
+            cpu: "{{ .Values.resources.requests.cpu }}"
+          limits:
+            memory: "{{ .Values.resources.limits.memory }}"
+            cpu: "{{ .Values.resources.limits.cpu }}"
+
+        volumeMounts:
+        - name: reports
+          mountPath: /app/reports
+        - name: tmp
+          mountPath: /tmp
+
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - test -f /tmp/test-running || exit 1
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - node --version > /dev/null
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+      volumes:
+      - name: reports
+        persistentVolumeClaim:
+          claimName: besttester-reports
+      - name: tmp
+        emptyDir: {}
+
+      affinity:
+        {{- if .Values.affinity.enabled }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - besttester
+                - key: test-suite
+                  operator: In
+                  values:
+                  - {{ .Values.testSuite }}
+              topologyKey: kubernetes.io/hostname
+        {{- end }}

@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: besttester
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: besttester
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: besttester
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: besttester
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: besttester
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: besttester
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: besttester
+subjects:
+- kind: ServiceAccount
+  name: besttester
+  namespace: {{ .Values.namespace }}

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: besttester-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: besttester
+    test-suite: {{ .Values.testSuite }}
+    version: {{ .Chart.AppVersion }}
+data:
+  BASE_URL: {{ .Values.baseUrl | quote }}
+  API_BASE_URL: {{ .Values.apiBaseUrl | quote }}
+  ADMIN_USERNAME: {{ .Values.adminUsername | quote }}
+  TEST_TIMEOUT: {{ .Values.testTimeout | quote }}
+  RETRY_ATTEMPTS: {{ .Values.retryAttempts | quote }}
+  LOG_LEVEL: {{ .Values.logLevel | quote }}
+  REPORT_FORMAT: {{ .Values.reportFormat | quote }}
+  TRACE_ENABLED: {{ .Values.traceEnabled | quote }}
+  OTEL_COLLECTOR_ENDPOINT: {{ .Values.otelCollectorEndpoint | quote }}
+  PLAYWRIGHT_HEADED: "false"
+  PLAYWRIGHT_SLOW_MO: "0"
+  CI: "true"

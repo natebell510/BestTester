@@ -1,0 +1,16 @@
+apiVersion: v2
+name: besttester
+description: A Helm chart for distributed Playwright test execution
+type: application
+version: 1.0.0
+appVersion: "1.0.1"
+keywords:
+  - testing
+  - playwright
+  - e2e
+  - distributed
+maintainers:
+  - name: BestTester Team
+home: https://github.com/yourusername/besttester
+sources:
+  - https://github.com/yourusername/besttester

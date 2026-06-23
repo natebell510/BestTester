@@ -51,6 +51,7 @@
     "scaffold:test": "ts-node scripts/new-test.ts",
     "scaffold:api": "ts-node scripts/new-api.ts",
     "create:test": "ts-node scripts/create-test.ts",
+    "k8s:run": "ts-node scripts/k8s-run.ts",
     "jenkins:single-test": "ts-node scripts/trigger-single-test.ts",
     "jenkins:push-jobs": "bash scripts/push-single-test-job.sh",
     "typecheck": "tsc --noEmit",
