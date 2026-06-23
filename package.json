@@ -22,6 +22,7 @@
     "test:mobile": "playwright test --config config/playwright.mobile.config.ts --grep \"@mobile\"",
     "test:contracts": "playwright test tests/contracts --config config/playwright.config.ts",
     "test:a11y": "playwright test tests/a11y --config config/playwright.config.ts --grep \"@a11y\"",
+    "test:performance": "playwright test tests/performance --config config/playwright.config.ts --grep \"@performance\"",
     "test:headed": "playwright test --config config/playwright.config.ts --headed",
     "test:debug": "playwright test --config config/playwright.config.ts --debug",
     "lint": "eslint .",

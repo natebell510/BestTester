@@ -151,6 +151,7 @@ npm run test:i18n            # Internationalization tests
 npm run test:auth-matrix     # Multi-role auth tests
 npm run test:contracts       # Consumer-driven contract tests (Pact)
 npm run test:a11y            # Accessibility tests (WCAG 2.2 AA)
+npm run test:performance     # Performance & Core Web Vitals tests
 
 # By tag
 npm run test:smoke           # @smoke
@@ -158,6 +159,7 @@ npm run test:regression      # @regression
 npm run test:e2e             # @e2e
 npm run test:visual          # @visual
 npm run test:a11y            # @a11y
+npm run test:performance     # @performance
 
 # Debug modes
 npm run test:headed          # Headed browser
@@ -435,6 +437,60 @@ const report = a11yChecker.generateA11yReport(result.violations);
 - [x] Dashboard a11y tests
 - [ ] Employee list a11y tests
 - [ ] Hire flow a11y tests
+
+---
+
+## Performance Testing
+
+Core Web Vitals monitoring with configurable performance budgets.
+
+**Metrics collected:**
+- **LCP** (Largest Contentful Paint): page load speed
+- **INP** (Interaction to Next Paint): responsiveness
+- **CLS** (Cumulative Layout Shift): visual stability
+- **TTFB** (Time to First Byte): server responsiveness
+- **FCP** (First Contentful Paint): perceived load speed
+
+**Performance budgets by environment:**
+| Metric | Dev | Staging | Prod |
+|--------|-----|---------|------|
+| LCP Good | <3000ms | <2500ms | <2000ms |
+| LCP Fail | >6000ms | >5000ms | >4000ms |
+| CLS Good | <0.1 | <0.1 | <0.1 |
+| TTFB Good | <800ms | <800ms | <600ms |
+
+**Running performance tests:**
+```bash
+# Run all performance tests
+npm run test:performance
+
+# Run with custom environment
+TEST_ENV=prod npm run test:performance
+
+# Generate HTML performance report
+npm run test:performance && open reports/performance-report.html
+```
+
+**Usage in tests:**
+```typescript
+import { PerformanceCollector } from '../../src/performance/performance-collector';
+import { PerformanceBudget } from '../../src/performance/performance-budget';
+
+const collector = new PerformanceCollector();
+const budget = new PerformanceBudget();
+
+await page.goto(url);
+await collector.waitForMetricsStability(page);
+const metrics = await collector.collectMetrics(page);
+
+const violations = budget.checkMetrics(metrics, 'prod');
+expect(violations.filter(v => v.status === 'fail')).toHaveLength(0);
+```
+
+**Historical trend tracking:**
+- Last 10 runs stored in `reports/performance-history.json`
+- Trend analysis via `PerformanceReporter.getTrendData(metric)`
+- HTML report auto-generated after each test run
 
 ---
 
