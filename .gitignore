@@ -12,6 +12,11 @@ auth-state/
 # IDE / OS
 .idea/
 .vscode/
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+!.vscode/snippets/
 *.swp
 Thumbs.db
 

@@ -1,0 +1,79 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Current Test",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright",
+      "args": ["test", "--debug", "--headed", "${file}"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PWDEBUG": "1" },
+      "console": "integratedTerminal",
+      "preLaunchTask": "tsc: build"
+    },
+    {
+      "name": "Debug Smoke Tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright",
+      "args": ["test", "--debug", "--headed", "--grep", "@smoke"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PWDEBUG": "1" },
+      "console": "integratedTerminal",
+      "preLaunchTask": "tsc: build"
+    },
+    {
+      "name": "Debug with Trace",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright",
+      "args": ["test", "--trace", "on", "${file}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "preLaunchTask": "tsc: build"
+    },
+    {
+      "name": "Debug with Inspector",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright",
+      "args": ["test", "--headed"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PWDEBUG": "console" },
+      "console": "integratedTerminal",
+      "preLaunchTask": "tsc: build"
+    },
+    {
+      "name": "Debug Single Test by Title",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright",
+      "args": ["test", "--debug", "-g", "${selectedText}"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PWDEBUG": "1" },
+      "console": "integratedTerminal",
+      "preLaunchTask": "tsc: build"
+    },
+    {
+      "name": "Debug API Tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright",
+      "args": ["test", "--debug", "--grep", "@api"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "preLaunchTask": "tsc: build"
+    },
+    {
+      "name": "Debug Security Tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright",
+      "args": ["test", "--debug", "--grep", "@security"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "preLaunchTask": "tsc: build"
+    }
+  ]
+}

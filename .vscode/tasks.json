@@ -1,0 +1,112 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm: test",
+      "type": "npm",
+      "script": "test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "npm: test:smoke",
+      "type": "npm",
+      "script": "test:smoke",
+      "group": "test",
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "npm: test:ui",
+      "type": "npm",
+      "script": "test:ui",
+      "group": "test"
+    },
+    {
+      "label": "npm: test:api",
+      "type": "npm",
+      "script": "test:api",
+      "group": "test"
+    },
+    {
+      "label": "npm: test:security",
+      "type": "npm",
+      "script": "test:security",
+      "group": "test"
+    },
+    {
+      "label": "npm: lint",
+      "type": "npm",
+      "script": "lint",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "npm: lint:fix",
+      "type": "npm",
+      "script": "lint:fix",
+      "group": "build"
+    },
+    {
+      "label": "npm: format",
+      "type": "npm",
+      "script": "format",
+      "group": "build"
+    },
+    {
+      "label": "npm: typecheck",
+      "type": "npm",
+      "script": "typecheck",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "npm: report:dashboard",
+      "type": "npm",
+      "script": "report:dashboard",
+      "group": "build"
+    },
+    {
+      "label": "npm: create:test",
+      "type": "npm",
+      "script": "create:test",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "echo": true
+      }
+    },
+    {
+      "label": "npm: setup",
+      "type": "npm",
+      "script": "setup",
+      "group": "build",
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "tsc: build",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "typecheck"],
+      "group": "build",
+      "isBackground": true,
+      "problemMatcher": "$tsc"
+    }
+  ]
+}

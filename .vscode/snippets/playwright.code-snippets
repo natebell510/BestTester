@@ -1,0 +1,122 @@
+{
+  "New Playwright Test": {
+    "prefix": "pwtest",
+    "body": [
+      "/**",
+      " * @file ${TM_FILENAME}",
+      " * @description ${1:Test description}",
+      " * @tags @${2:smoke} @${3:regression}",
+      " */",
+      "import { test, expect } from '@playwright/test';",
+      "",
+      "test.describe('${4:Feature}', () => {",
+      "  test.beforeEach(async ({ page }) => {",
+      "    await page.goto('/');",
+      "  });",
+      "",
+      "  test('${5:should do something}', async ({ page }) => {",
+      "    $0",
+      "  });",
+      "});"
+    ],
+    "description": "New Playwright test with JSDoc"
+  },
+  "New Page Object": {
+    "prefix": "pwpage",
+    "body": [
+      "import { Page } from '@playwright/test';",
+      "",
+      "/**",
+      " * @file ${TM_FILENAME}",
+      " * @description Page Object for ${1:PageName}",
+      " */",
+      "export class ${1:PageName}Page {",
+      "  private readonly ${2:element} = this.page.locator('[data-testid=\"${3:element}\"]');",
+      "",
+      "  constructor(private page: Page) {}",
+      "",
+      "  async goto(): Promise<void> {",
+      "    await this.page.goto('${4:/path}');",
+      "  }",
+      "",
+      "  async ${5:action}(): Promise<void> {",
+      "    await this.${2:element}.click();",
+      "  }",
+      "}"
+    ],
+    "description": "New Page Object Model class"
+  },
+  "New API Test": {
+    "prefix": "pwapitest",
+    "body": [
+      "/**",
+      " * @file ${TM_FILENAME}",
+      " * @description API tests for ${1:resource}",
+      " * @tags @api @${2:regression}",
+      " */",
+      "import { test, expect } from '@playwright/test';",
+      "import axios from 'axios';",
+      "",
+      "test.describe('${1:Resource} API', () => {",
+      "  const baseURL = process.env.API_BASE_URL || 'https://api.example.com';",
+      "",
+      "  test('GET ${1:resource} returns 200', async () => {",
+      "    const response = await axios.get(`${baseURL}${3:/api/endpoint}`);",
+      "    expect(response.status).toBe(200);",
+      "    $0",
+      "  });",
+      "});"
+    ],
+    "description": "New API test"
+  },
+  "New Fixture": {
+    "prefix": "pwfixture",
+    "body": [
+      "import { test as base, Page } from '@playwright/test';",
+      "",
+      "/**",
+      " * @file ${TM_FILENAME}",
+      " * @description Custom fixture for ${1:feature}}",
+      " */",
+      "type ${1:Feature}Fixtures = {",
+      "  ${2:setupData}: ${3:SetupType};",
+      "};",
+      "",
+      "export const test = base.extend<${1:Feature}Fixtures>({",
+      "  ${2:setupData}: async ({ }, use) => {",
+      "    const data = { $0 };",
+      "    await use(data);",
+      "  },",
+      "});"
+    ],
+    "description": "New Playwright fixture"
+  },
+  "Test with Assertions": {
+    "prefix": "pwtestassert",
+    "body": [
+      "test('${1:should verify behavior}', async ({ page }) => {",
+      "  await page.goto('${2:/}');",
+      "  ",
+      "  // Arrange",
+      "  const element = page.locator('[data-testid=\"${3:element}\"]');",
+      "  ",
+      "  // Act",
+      "  await element.click();",
+      "  ",
+      "  // Assert",
+      "  await expect(element).toBeVisible();",
+      "  $0",
+      "});"
+    ],
+    "description": "Test with AAA pattern"
+  },
+  "Wait for Element": {
+    "prefix": "pwwait",
+    "body": [
+      "await page.waitForSelector('[data-testid=\"${1:element}\"]', { timeout: ${2:5000} });",
+      "const element = page.locator('[data-testid=\"${1:element}\"]');",
+      "await expect(element).toBeVisible();"
+    ],
+    "description": "Wait for element with timeout"
+  }
+}

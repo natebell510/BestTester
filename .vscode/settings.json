@@ -1,0 +1,35 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.enableFilesAutoImportForJS": true,
+  "files.exclude": {
+    "node_modules": true,
+    "dist": true,
+    ".stryker-tmp": true
+  },
+  "search.exclude": {
+    "node_modules": true,
+    "dist": true,
+    "allure-results": true,
+    "reports": true,
+    ".git": true
+  },
+  "eslint.format.enable": true,
+  "eslint.debug": false,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "playwright.env": "test",
+  "playwright.showTrace": "on-first-retry"
+}
