@@ -14,6 +14,7 @@
     "test:smoke": "playwright test --config config/playwright.config.ts --grep \"@smoke\"",
     "test:regression": "playwright test --config config/playwright.config.ts --grep \"@regression\"",
     "test:visual": "playwright test --config config/playwright.config.ts --grep \"@visual\"",
+    "visual:update": "playwright test tests/ui/visual --config config/playwright.config.ts --update-snapshots",
     "test:file-ops": "playwright test --config config/playwright.config.ts --grep \"@file-ops\"",
     "test:e2e": "playwright test --config config/playwright.config.ts --grep \"@e2e\"",
     "test:security": "playwright test --config config/playwright.config.ts --grep \"@security\"",

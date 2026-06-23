@@ -494,6 +494,76 @@ expect(violations.filter(v => v.status === 'fail')).toHaveLength(0);
 
 ---
 
+## Visual Regression Testing
+
+Advanced visual regression with per-environment and per-browser baseline management.
+
+**Features:**
+- **Environment-based baselines**: dev/staging/prod stored separately
+- **Browser-based baselines**: chromium/firefox/webkit stored separately
+- **Dynamic content masking**: auto-mask dates, usernames, timestamps
+- **Baseline metadata tracking**: store snapshots with timestamps and descriptions
+- **Cleanup utilities**: delete old baselines, maintenance tools
+
+**Baseline organization:**
+```
+reports/baselines/
+├── login-page-dev-chromium.png
+├── login-page-staging-chromium.png
+├── login-page-prod-chromium.png
+├── login-page-dev-firefox.png
+├── metadata-dev-chromium.json
+└── metadata-prod-chromium.json
+```
+
+**Running visual tests:**
+```bash
+# Run visual tests
+npm run test:visual
+
+# Update/regenerate baselines
+npm run visual:update
+
+# For specific environment
+TEST_ENV=prod npm run test:visual
+
+# For specific browser
+BROWSER_NAME=firefox npm run test:visual
+```
+
+**Usage in tests:**
+```typescript
+import { BaselineManager } from '../../src/visual/baseline-manager';
+
+const baselineManager = new BaselineManager('prod', 'chromium');
+
+// Save new baseline
+await baselineManager.saveBaseline(page, 'login-page', 'Production login baseline');
+
+// Load baseline (returns path if exists)
+const baselinePath = baselineManager.loadBaseline('login-page');
+
+// Update baseline metadata
+baselineManager.updateBaseline('login-page', 'Updated description');
+
+// List all baselines
+const baselines = baselineManager.listBaselines();
+
+// Get statistics
+const stats = baselineManager.getStatistics();
+// Returns: { totalBaselines, byEnvironment, byBrowser }
+
+// Clean old baselines
+const deleted = await baselineManager.clearOldBaselines(30); // days
+```
+
+**Diff reporting:**
+- Visual diffs auto-generated with max pixel threshold
+- PR comments show side-by-side comparisons
+- Allure integration embeds diff images in reports
+
+---
+
 ## Mobile Testing
 
 Dedicated mobile test suite using Playwright device emulation against [SauceDemo](https://www.saucedemo.com) — a free, publicly available e-commerce demo app.
