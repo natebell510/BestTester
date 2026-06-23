@@ -74,9 +74,12 @@ export function initConfig(): Config {
   return configInstance;
 }
 
-export function getConfig(): Config | null {
+export function getConfig(): Config {
   if (!configInstance) {
     initConfig();
+  }
+  if (!configInstance) {
+    throw new Error('Failed to initialize config - check environment variables');
   }
   return configInstance;
 }
