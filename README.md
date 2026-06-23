@@ -1,13 +1,15 @@
-# BestTester
+# BestTester — Gold-Standard QA Platform
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20.x-brightgreen)](https://nodejs.org)
 [![Playwright](https://img.shields.io/badge/playwright-latest-blue)](https://playwright.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6)](https://www.typescriptlang.org)
-[![AWS Bedrock](https://img.shields.io/badge/AWS_Bedrock-AI_Testing-FF9900)](https://aws.amazon.com/bedrock/)
-[![MCP](https://img.shields.io/badge/MCP-Model_Context_Protocol-purple)](https://modelcontextprotocol.io)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6)](https://www.typescriptlang.org)
+[![Claude API](https://img.shields.io/badge/Claude-AI_Testing-000000)](https://claude.ai)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED)](https://www.docker.com)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Distributed-326CE5)](https://kubernetes.io)
+[![Helm](https://img.shields.io/badge/Helm-Charts-0F1689)](https://helm.sh)
 
-> **Production-grade, plug-and-play Playwright + TypeScript QE framework** for UI, API, mobile, AI-powered, security, i18n, and file-operations testing — with built-in CI/CD, AI agents, LLM-as-Judge evaluation, MCP server, Jenkins orchestration, Jira sync, and Slack reporting.
+> **The industry-leading, production-grade Playwright + TypeScript QE framework** for UI, API, mobile, and AI testing at scale — with distributed Kubernetes execution, Claude vision-based assertions, interactive documentation, comprehensive example gallery, Docker containerization, GitHub Actions optimization, and complete observability via OpenTelemetry.
 
 ---
 
@@ -15,55 +17,56 @@
 
 | Advantage | Details |
 |---|---|
-| **Zero-config start** | Clone → `npm ci` → `npm run test:smoke` — works out of the box with OrangeHRM demo |
+| **Zero-config start** | Clone → `npm ci` → `npm run test:smoke` — works out of the box |
 | **Full Page Object Model** | Every page extends `BasePage`; no inline selectors in spec files |
-| **AI-native testing** | LLM-powered assertions, semantic similarity, AI locator fallback, hallucination detection |
-| **LLM-as-Judge** | Multi-dimensional rubric scoring (relevance, accuracy, coherence, safety, faithfulness) via AWS Bedrock with anti-narcissistic-bias dual-model design |
-| **MCP integration** | Model Context Protocol server (stdio + SSE) lets AI agents navigate, screenshot, run tests, and list specs |
-| **7 CLI agents** | Code review, test healer, suggestion generator, Jenkins trigger, Jira sync, Slack bot, run-and-report — all from the terminal |
-| **Security testing** | SQLi/XSS fuzzer, security header validator, OWASP ZAP proxy integration |
-| **Multi-environment** | `TEST_ENV=dev|staging|prod` with per-environment `.env` files |
-| **Mobile testing** | Dedicated mobile test suite with device emulation (Pixel 5, iPhone 13, iPad), touch/swipe helpers, responsive assertions |
+| **Claude AI Testing** | Vision-based assertions, semantic similarity, test generation, hallucination detection |
+| **Interactive Docs** | Searchable documentation with getting started, guides, architecture, and 26+ examples |
+| **Example Gallery** | Production-ready test patterns for UI, API, security, AI, and mobile testing |
+| **Distributed K8s** | Kubernetes Job orchestration with Helm charts, dynamic worker scaling, result aggregation |
+| **Docker Ready** | Multi-stage builds, docker-compose stack with Allure + Jaeger, SBOM generation |
+| **CI/CD Optimized** | GitHub Actions with npm caching, Playwright browser cache, matrix sharding, change detection |
+| **Observability** | OpenTelemetry tracing, Jaeger UI, distributed metrics, structured JSON logging |
+| **Security testing** | OWASP Top 10 coverage, XSS/CSRF prevention, auth bypass detection, SQL injection fuzzing |
+| **Multi-environment** | `TEST_ENV=dev\|staging\|prod` with per-environment `.env` files |
+| **Mobile testing** | Dedicated mobile test suite with device emulation (Pixel 5, iPhone 13, iPad), touch/swipe helpers |
 | **Multi-browser** | Chromium, Firefox, WebKit, mobile Chrome, mobile Safari via `ALL_BROWSERS=true` |
 | **Mutation testing** | Stryker Mutator with configurable thresholds and HTML/JSON reports |
-| **Full CI/CD** | 10 GitHub Actions workflows: CI, nightly, smoke, PR gate, security scan, mutation, AI tests, API tests, report publishing, Copilot review |
-| **Jenkins pipeline** | Jenkinsfile with EC2 provisioning scripts, single-test trigger, remote job management |
-| **Jira integration** | Auto-create/update/close bugs from test results, attach JUnit XML, link test executions to stories |
-| **Slack notifications** | Real-time build results, failure alerts, and report links posted to Slack channels |
+| **Data management** | Fluent builders, seed management with idempotent application, cleanup registry with audit trails |
 | **Allure + HTML reports** | Dual reporting with Allure (GitHub Pages auto-publish) and Playwright HTML |
-| **Data factories** | Faker-powered factories with auto-teardown registry for clean test isolation |
-| **File operations** | Download verification, Excel read/write, Word document generation, PDF parsing with content assertions |
+| **Code quality** | ESLint + Prettier + Husky + Gitleaks secret scanning + pre-commit hooks |
+| **Type safety** | Strict TypeScript with Zod schema validation for API responses and requests |
+| **Scaffolding CLI** | `scaffold:page`, `scaffold:test`, `scaffold:api` generators for consistent code structure |
+| **File operations** | Download verification, Excel read/write, Word document generation, PDF parsing |
 | **i18n testing** | Locale switcher, RTL detection, string validation across `en`, `fr`, `ar`, `ja` |
 | **Auth matrix** | Multi-role testing (Admin, Manager, Employee) with cached storage state |
-| **Scaffolding CLI** | `scaffold:page`, `scaffold:test`, `scaffold:api` generators for consistent code structure |
-| **Code quality** | ESLint + Prettier + Husky pre-commit/pre-push hooks + lint-staged |
-| **Type safety** | Strict TypeScript with Zod schema validation for API responses |
+| **Performance testing** | Core Web Vitals measurement, performance budgets, trend tracking, regression detection |
+| **Accessibility testing** | WCAG 2.2 AA compliance, axe-core integration, semantic markup validation |
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                          BestTester                              │
-├─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬──────────┤
-│UI Tests │API Tests│ Mobile  │AI Tests │Security │  i18n   │ File-Ops │
-│(PW)     │(Axios)  │(Emulate)│(Bedrock)│(ZAP)    │(Locale) │(xlsx/pdf)│
-├──────────┴──────────┴──────────┴──────────┴──────────┴───────────┤
-│  Page Object Model (src/pages/)    │  API Layer (src/api/)       │
-│  Mobile Pages (src/mobile/)        │  Security (src/security/)   │
-│  AI Helpers (src/ai/)              │  Data Factories (src/data/) │
-│  Fixtures (src/fixtures/)          │  i18n (src/i18n/)           │
-├──────────────────────────────────────────────────────────────────┤
-│  AI: LLM Client │ AI Assert │ Semantic Assert │ LLM Judge       │
-│      AI Locator │ Embeddings (Titan) │ MCP Server (stdio/SSE)   │
-├──────────────────────────────────────────────────────────────────┤
-│  Agents: Code Review │ Test Healer │ Suggestions │ Jenkins       │
-│          Jira Sync   │ Slack Bot   │ Run-and-Report              │
-├──────────────────────────────────────────────────────────────────┤
-│  CI/CD: GitHub Actions (10 workflows) │ Jenkins (EC2)            │
-│  Reports: Allure │ Playwright HTML │ Slack │ JUnit XML │ Jira    │
-└──────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│                    BestTester — Gold-Standard QA Platform                  │
+├─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬──────────┬────────┤
+│UI Tests │API Tests│ Mobile  │AI Tests │Security │  i18n   │ File-Ops │ Perf   │
+│(PW)     │(REST)   │(Emulate)│(Claude) │(OWASP)  │(Locale) │(xlsx/pdf)│(CWV)   │
+├────────────────────────────────────────────────────────────────────────────┤
+│  Page Objects (src/pages/)        │  API Clients (src/api/)         │
+│  Mobile Pages (src/mobile/)       │  Security (src/security/)       │
+│  AI Integration (src/ai/)         │  Data Builders (src/data/)      │
+│  Fixtures (src/fixtures/)         │  i18n (src/i18n/)               │
+├────────────────────────────────────────────────────────────────────────────┤
+│  AI: Claude Vision │ Semantic Matching │ Test Generation │ Seed Mgr      │
+│      Cleanup Registry │ Data Builders (Zod validated)                    │
+├────────────────────────────────────────────────────────────────────────────┤
+│  Execution: GitHub Actions (Optimized) │ Kubernetes (Distributed)        │
+│  Infrastructure: Docker (Multi-stage) │ Helm Charts │ Docker Compose    │
+├────────────────────────────────────────────────────────────────────────────┤
+│  Reports: Allure │ Playwright HTML │ OTel Traces │ Jaeger │ Metrics      │
+│  Observability: OpenTelemetry Tracing │ Winston Structured Logging       │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -93,43 +96,59 @@ npm run test:smoke
 
 ```
 BestTester/
-├── .github/workflows/      # 10 CI/CD pipelines (ci, nightly, smoke, pr-gate, security, mutation, ai, api, report, copilot-review)
-├── agents/                  # 7 AI CLI agents (review, heal, suggest, jenkins, jira-sync, slack-bot, run-and-report)
-├── config/                  # Playwright config, global-setup, per-environment .env files (dev/staging/prod)
-├── mcp/                     # MCP server (stdio + SSE) and AI test generator client
-├── mutation/                # Stryker mutation testing config and HTML/JSON reports
-├── scripts/                 # Shell & TS utilities (Jenkins provisioning, Slack, scaffolding, EC2)
+├── .github/workflows/      # CI/CD: ci, smoke, docker-publish, docs deployment
+├── config/                 # Playwright configs, global setup, per-environment .env (dev/staging/prod)
+├── docs/                   # Interactive documentation (getting started, guides, examples)
+│   ├── getting-started/    # quickstart, installation, first-test
+│   ├── guides/             # architecture, test-writing, ai-testing, ci-cd, kubernetes
+│   └── examples/           # linked to example gallery
+├── examples/               # 26+ production-ready test patterns
+│   ├── ui/                 # form-validation, file-upload, interactions, responsive
+│   ├── api/                # error-handling, authentication, pagination
+│   ├── ai/                 # vision-testing, semantic-similarity
+│   ├── security/           # xss-prevention, csrf-protection, auth-bypass
+│   └── README.md           # example gallery with learning path
+├── k8s/                    # Kubernetes configuration
+│   ├── job.yaml            # Kubernetes Job manifest
+│   ├── configmap.yaml      # Non-secret configuration
+│   ├── rbac.yaml           # ServiceAccount, Role, RoleBinding
+│   ├── secret.yaml.template # Secrets template (not committed)
+│   ├── helm/               # Helm chart for deployment
+│   │   ├── Chart.yaml
+│   │   ├── values.yaml
+│   │   └── templates/      # job, configmap, secret, pvc, rbac
+│   └── DEPLOYMENT_GUIDE.md # Complete K8s deployment guide
+├── scripts/                # Utility scripts
+│   ├── k8s-run.ts          # Kubernetes job runner with log streaming
+│   ├── create-test.ts      # Interactive test generation CLI
+│   └── other scaffolding scripts
 ├── src/
-│   ├── ai/                  # LLM client (Bedrock), AI assertions, semantic assertions, AI locator
-│   │   └── judge/           # LLM-as-Judge: multi-rubric evaluation, safety checks, pairwise comparison
-│   ├── api/                 # API client layer (BaseAPI + auth, employee, leave clients)
-│   ├── auth/                # Multi-role auth (Admin/Manager/Employee), storage state caching
-│   ├── components/          # Reusable UI components (form, modal, navbar, table)
-│   ├── constants/           # Shared constants
-│   ├── data/                # Test data factories (Faker) + teardown registry
-│   ├── fixtures/            # Custom Playwright fixtures (base, api, auth, mobile)
-│   ├── i18n/                # Locale switcher, RTL detection, string validator
-│   ├── mobile/              # Mobile page objects (BaseMobilePage + login, products, cart)
-│   ├── pages/               # Page Object Model (login, dashboard, employee, leave, reports)
-│   ├── security/            # SQLi/XSS fuzzer, security header validator, OWASP ZAP client
-│   ├── types/               # TypeScript interfaces (API responses, config, employee, Jira)
-│   └── utils/               # Logger (Winston), Slack, Jenkins, 1Password, Jira, file-handler, download-verifier, Excel, webhook
-├── tests/
-│   ├── ai/                  # AI/LLM response validation and content tests
-│   ├── api/smoke/           # API smoke tests
-│   ├── api/regression/      # API regression tests with Zod schema validation
-│   ├── auth-matrix/         # Multi-role access control tests
-│   ├── file-ops/            # File download, Excel, Word, PDF tests
-│   ├── i18n/                # Internationalization smoke tests
-│   ├── mobile/              # Mobile device emulation tests (login, products, responsive)
-│   ├── security/            # Security header and penetration tests
-│   ├── ui/smoke/            # UI smoke suite (@smoke)
-│   ├── ui/regression/       # UI regression suite (@regression)
-│   ├── ui/e2e/              # End-to-end journeys (@e2e)
-│   └── ui/visual/           # Visual regression tests (@visual)
-├── Jenkinsfile              # Main Jenkins pipeline
-├── Jenkinsfile.single-test  # Single-test Jenkins pipeline
-└── README.md
+│   ├── ai/                 # Claude API integration, vision, semantic matching
+│   ├── api/                # REST/GraphQL clients with Zod validation
+│   ├── auth/               # Multi-role auth, storage state caching
+│   ├── data/               # Fluent builders, seed manager, cleanup registry
+│   ├── fixtures/           # Custom Playwright fixtures
+│   ├── helpers/            # Wait helpers, formatters, utils
+│   ├── observability/      # OpenTelemetry tracing, metrics
+│   ├── page-objects/       # Page Object Model hierarchy
+│   ├── mobile/             # Mobile page objects
+│   ├── types/              # TypeScript interfaces
+│   └── utils/              # Logger (Winston), file handlers, etc.
+├── tests/                  # Comprehensive test suites
+│   ├── ui/                 # UI tests (smoke, regression, visual, e2e)
+│   ├── api/                # API tests with schema validation
+│   ├── ai/                 # AI/LLM tests
+│   ├── security/           # Security/OWASP testing
+│   ├── mobile/             # Mobile device emulation
+│   ├── performance/        # Performance & Core Web Vitals
+│   ├── a11y/               # Accessibility (WCAG 2.2 AA)
+│   ├── data/               # Data management tests
+│   └── flakiness/          # Flaky test detection & quarantine
+├── Dockerfile              # Multi-stage build with Playwright base
+├── docker-compose.yml      # Full stack: app, testsuite, allure, otel, jaeger
+├── otel-collector-config.yml # OpenTelemetry collector configuration
+├── package.json            # 50+ npm scripts for all testing scenarios
+└── README.md               # This file
 ```
 
 ---
