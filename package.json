@@ -86,6 +86,8 @@
     "allure-commandline": "latest",
     "allure-playwright": "latest",
     "eslint": "latest",
+    "eslint-plugin-playwright": "^2.10.4",
+    "eslint-plugin-security": "^4.0.1",
     "husky": "latest",
     "lint-staged": "latest",
     "prettier": "latest",

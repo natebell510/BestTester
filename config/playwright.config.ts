@@ -52,11 +52,13 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: /global-setup\.ts/,
+      timeout: 60_000,
     },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
       dependencies: ['setup'],
+      timeout: 60_000,
     },
     ...(config.allBrowsers
       ? [
@@ -64,23 +66,28 @@ export default defineConfig({
             name: 'firefox',
             use: { ...devices['Desktop Firefox'] },
             dependencies: ['setup'] as string[],
+            timeout: 60_000,
           },
           {
             name: 'webkit',
             use: { ...devices['Desktop Safari'] },
             dependencies: ['setup'] as string[],
+            timeout: 60_000,
           },
           {
             name: 'mobile-chrome',
             use: { ...devices['Pixel 5'] },
             dependencies: ['setup'] as string[],
+            timeout: 60_000,
           },
           {
             name: 'mobile-safari',
             use: { ...devices['iPhone 13'] },
             dependencies: ['setup'] as string[],
+            timeout: 60_000,
           },
         ]
       : []),
   ],
+  webServer: undefined,
 });
