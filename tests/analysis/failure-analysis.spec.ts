@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { FailureAnalyzer, TestFailure, FailurePattern, RecoveryStrategy } from '../../src/analysis/failure-analyzer';
+import {
+  FailureAnalyzer,
+  TestFailure,
+  RecoveryStrategy,
+} from '../../src/analysis/failure-analyzer';
 
 test.describe('Test Failure Analysis @analysis', () => {
   let analyzer: FailureAnalyzer;
