@@ -32,6 +32,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*", "tests/**/*", "agents/**/*", "config/**/*", "reports/**/*", "scripts/**/*", "mutation/**/*"],
+  "include": ["src/**/*", "tests/**/*", "agents/**/*", "config/**/*", "reports/**/*", "scripts/**/*", "mutation/**/*", "mcp/**/*"],
   "exclude": ["node_modules", "dist", "mutation"]
 }

@@ -242,13 +242,51 @@ npm run mcp:generate         # AI test generator client
 ```
 
 **Available MCP tools:**
-| Tool | Description |
-|---|---|
-| `navigate` | Open URL, return title + screenshot |
-| `screenshot` | Full-page screenshot of any URL |
-| `get_page_text` | Extract visible text from a page |
-| `run_test` | Execute a specific test file |
-| `list_tests` | List all available test specs |
+| Tool | Description | Example |
+|---|---|---|
+| `navigate` | Open URL, return title + screenshot | `navigate({url: "https://example.com"})` |
+| `screenshot` | Full-page screenshot of any URL | `screenshot({url: "https://example.com"})` |
+| `get_page_text` | Extract visible text from a page | `get_page_text({url: "https://example.com"})` |
+| `run_test` | Execute a specific test file | `run_test({testFile: "tests/ui/login.spec.ts"})` |
+| `list_tests` | List all available test specs | `list_tests({})` |
+| `generate_test_from_description` | Generate complete test file from natural language feature description | `generate_test_from_description({description: "Test user login flow"})` |
+| `generate_page_object` | Analyze a URL and generate a full Page Object Model class | `generate_page_object({url: "https://example.com/login"})` |
+| `generate_api_test` | Generate API test suite from OpenAPI 3.0 specification | `generate_api_test({openapi_spec_url: "https://api.example.com/openapi.json"})` |
+| `analyze_test_coverage` | Analyze Page Object Model and identify coverage gaps | `analyze_test_coverage({page_object_content: "export class LoginPage { ... }"})` |
+
+**Test Generator Examples:**
+
+Generate a complete login test:
+```javascript
+const result = await client.callTool('generate_test_from_description', {
+  description: 'User logs in with email and password, verifies dashboard appears'
+});
+// Returns TypeScript test file ready to run with npm run test:smoke
+```
+
+Generate a Page Object Model by analyzing a live page:
+```javascript
+const pom = await client.callTool('generate_page_object', {
+  url: 'https://orangehrm-demo.com/web/index.php/auth/login'
+});
+// Returns class LoginPage with all selectors and helper methods
+```
+
+Generate API test suite from spec:
+```javascript
+const apiTest = await client.callTool('generate_api_test', {
+  openapi_spec_url: 'https://api.example.com/v1/openapi.json'
+});
+// Returns complete test suite validating all endpoints and schemas
+```
+
+Identify test coverage gaps:
+```javascript
+const gaps = await client.callTool('analyze_test_coverage', {
+  page_object_content: pomClassContent
+});
+// Returns array of missing test scenarios and accessibility checks
+```
 
 ---
 
