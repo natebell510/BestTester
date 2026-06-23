@@ -1,0 +1,348 @@
+name: CI - Optimized
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  # Determine which test suites need to run based on file changes
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.changes.outputs.api }}
+      ui: ${{ steps.changes.outputs.ui }}
+      security: ${{ steps.changes.outputs.security }}
+      performance: ${{ steps.changes.outputs.performance }}
+      unit: ${{ steps.changes.outputs.unit }}
+      all: ${{ steps.changes.outputs.all }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for file changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            BASE_REF="HEAD~1"
+          else
+            BASE_REF="origin/${{ github.base_ref }}"
+          fi
+
+          git fetch origin ${{ github.base_ref }} --depth=1
+
+          # Check which directories changed
+          echo "api=$(git diff --name-only $BASE_REF HEAD -- tests/api src/api | wc -l)" >> $GITHUB_OUTPUT
+          echo "ui=$(git diff --name-only $BASE_REF HEAD -- tests/ui src/pages | wc -l)" >> $GITHUB_OUTPUT
+          echo "security=$(git diff --name-only $BASE_REF HEAD -- tests/security | wc -l)" >> $GITHUB_OUTPUT
+          echo "performance=$(git diff --name-only $BASE_REF HEAD -- tests/performance src/performance | wc -l)" >> $GITHUB_OUTPUT
+          echo "unit=$(git diff --name-only $BASE_REF HEAD -- src/ | wc -l)" >> $GITHUB_OUTPUT
+          echo "all=1" >> $GITHUB_OUTPUT
+
+  # Lint and type check (always runs, fast)
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript check
+        run: npm run typecheck
+
+  # Smoke tests (always runs, comprehensive)
+  smoke:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run smoke tests
+        run: npm run test:smoke
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          CI: true
+
+      - name: Upload Playwright reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-reports
+          path: playwright-report/
+
+  # API tests with sharding
+  api-tests:
+    needs: [lint, changes]
+    if: needs.changes.outputs.api != '0' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+
+      - name: Run API tests (shard ${{ matrix.shard }}/2)
+        run: npm run test:api -- --shard=${{ matrix.shard }}/2
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          CI: true
+
+      - name: Upload API test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-results-shard-${{ matrix.shard }}
+          path: blob-report/
+
+  # Merge API test shards
+  api-merge:
+    if: always() && needs.api-tests.result != 'skipped'
+    needs: api-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download all API test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: api-test-results-shard-*
+
+      - name: Merge test reports
+        run: |
+          npm install -D @playwright/test
+          npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload merged report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-report-merged
+          path: playwright-report/
+
+  # UI tests with sharding
+  ui-tests:
+    needs: [lint, changes]
+    if: needs.changes.outputs.ui != '0' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+
+      - name: Run UI tests (shard ${{ matrix.shard }}/4)
+        run: npm run test:ui -- --shard=${{ matrix.shard }}/4
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          CI: true
+
+      - name: Upload UI test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results-shard-${{ matrix.shard }}
+          path: blob-report/
+
+  # Merge UI test shards
+  ui-merge:
+    if: always() && needs.ui-tests.result != 'skipped'
+    needs: ui-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download all UI test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: ui-test-results-shard-*
+
+      - name: Merge test reports
+        run: |
+          npm install -D @playwright/test
+          npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload merged report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-report-merged
+          path: playwright-report/
+
+  # Security tests
+  security-tests:
+    needs: [lint, changes]
+    if: needs.changes.outputs.security != '0' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+
+      - name: Run security tests
+        run: npm run test:security
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          CI: true
+
+      - name: Upload security test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-test-report
+          path: playwright-report/
+
+  # Determine overall status
+  test-results:
+    if: always()
+    needs: [smoke, api-merge, ui-merge, security-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.smoke.result }}" != "success" ]; then
+            echo "❌ Smoke tests failed"
+            exit 1
+          fi
+          echo "✅ All tests passed"

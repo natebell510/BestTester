@@ -1,10 +1,22 @@
 name: CI
 
 on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
-  test:
+  lint-typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,11 +30,37 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
+      - name: Run ESLint
         run: npm run lint
 
+      - name: Run TypeScript check
+        run: npm run typecheck
+
+  smoke-tests:
+    needs: lint-typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps
 
       - name: Run smoke tests
         run: npm run test:smoke
@@ -38,12 +76,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: reports/playwright-report/
+          path: playwright-report/
           retention-days: 7
 
       - name: Post Slack summary
         if: always()
-        run: npx ts-node agents/slack-bot-agent.ts --report reports/playwright-report/results.json
+        run: npx ts-node agents/slack-bot-agent.ts --report playwright-report/results.json
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           ALLURE_REPORT_URL: ${{ secrets.ALLURE_REPORT_URL }}

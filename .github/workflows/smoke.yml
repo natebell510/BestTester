@@ -2,6 +2,12 @@ name: Smoke Tests
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   smoke:
@@ -18,8 +24,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps
 
       - name: Run smoke tests
         id: smoke
@@ -30,24 +44,34 @@ jobs:
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           CI: true
 
-      - name: Comment PR with results
+      - name: Upload test results
         if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Comment PR with results
+        if: github.event_name == 'workflow_dispatch' && github.event.pull_request
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             let body = '## 🎭 Smoke Test Results\n';
             try {
-              const results = JSON.parse(fs.readFileSync('reports/playwright-report/results.json', 'utf8'));
+              const results = JSON.parse(fs.readFileSync('playwright-report/results.json', 'utf8'));
               const { expected, unexpected, skipped } = results.stats;
               body += `| ✅ Passed | ❌ Failed | ⏭ Skipped |\n|---|---|---|\n| ${expected} | ${unexpected} | ${skipped} |`;
               if (unexpected > 0) body += '\n\n> ⚠️ Smoke tests failed — merge blocked.';
             } catch {
               body += '_Could not parse results._';
             }
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body
-            });
+            if (context.issue?.number) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
