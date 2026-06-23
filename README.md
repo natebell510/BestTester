@@ -150,12 +150,14 @@ npm run test:security        # Security tests
 npm run test:i18n            # Internationalization tests
 npm run test:auth-matrix     # Multi-role auth tests
 npm run test:contracts       # Consumer-driven contract tests (Pact)
+npm run test:a11y            # Accessibility tests (WCAG 2.2 AA)
 
 # By tag
 npm run test:smoke           # @smoke
 npm run test:regression      # @regression
 npm run test:e2e             # @e2e
 npm run test:visual          # @visual
+npm run test:a11y            # @a11y
 
 # Debug modes
 npm run test:headed          # Headed browser
@@ -375,6 +377,64 @@ PACT_BROKER_URL=https://pact-broker.example.com npm run test:contracts
 2. Pact files published to broker
 3. Provider verifies contracts against its implementation
 4. CI blocks deployment if verification fails
+
+---
+
+## Accessibility Testing
+
+Comprehensive WCAG 2.2 AA compliance testing using Axe and Playwright.
+
+**AccessibilityChecker features:**
+- Full page scans with detailed violation reports
+- Component-level accessibility checks
+- Color contrast validation
+- WCAG compliance mapping
+- Automated report generation
+
+**Running accessibility tests:**
+```bash
+# Run all a11y tests
+npm run test:a11y
+
+# Run specific page accessibility
+npm run test:a11y -- --grep "Login Page"
+
+# Generate detailed report
+npm run test:a11y -- --reporter=html
+```
+
+**Usage in tests:**
+```typescript
+import { AccessibilityChecker } from '../../src/a11y/accessibility-checker';
+
+const a11yChecker = new AccessibilityChecker();
+
+// Check entire page (WCAG 2.2 AA)
+const result = await a11yChecker.checkPage(page, {
+  standards: 'wcag22aa',
+  disableRules: ['skip-link'],
+});
+
+// Check specific component
+const componentResult = await a11yChecker.checkComponent(page, '[role="main"]');
+
+// Check color contrast only
+const contrastIssues = await a11yChecker.checkColorContrast(page);
+
+// Generate report
+const report = a11yChecker.generateA11yReport(result.violations);
+```
+
+**Supported standards:**
+- WCAG 2.0 Level A/AA
+- WCAG 2.1 Level A/AA
+- WCAG 2.2 Level A/AA (recommended)
+
+**Test coverage:**
+- [x] Login page a11y tests
+- [x] Dashboard a11y tests
+- [ ] Employee list a11y tests
+- [ ] Hire flow a11y tests
 
 ---
 
