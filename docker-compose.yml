@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # Main test runner service
+  testsuite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=test
+    container_name: besttester-testsuite
+    environment:
+      - BASE_URL=http://app:3000
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CI=true
+      - NODE_ENV=test
+    volumes:
+      - ./reports:/app/reports:rw
+      - ./blob-report:/app/blob-report:rw
+      - ./playwright-report:/app/playwright-report:rw
+    ports:
+      - "3000:3000"
+    networks:
+      - besttester
+    depends_on:
+      - app
+      - otel-collector
+    healthcheck:
+      test: ["CMD", "npm", "run", "test:smoke", "--silent"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    stdin_open: true
+    tty: true
+
+  # Application under test (example)
+  app:
+    image: nginx:latest
+    container_name: besttester-app
+    ports:
+      - "3000:80"
+    volumes:
+      - ./test-app:/usr/share/nginx/html:ro
+    networks:
+      - besttester
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - TZ=UTC
+
+  # Allure report server
+  allure:
+    image: frankescobar/allure-docker-service:latest
+    container_name: besttester-allure
+    ports:
+      - "4040:4040"
+      - "3000:3000"
+    volumes:
+      - ./allure-results:/app/allure-results:rw
+      - ./allure-report:/app/allure-report:rw
+    networks:
+      - besttester
+    environment:
+      - CHECK_RESULTS_EVERY_SECONDS=5
+      - KEEP_HISTORY=1
+
+  # OpenTelemetry Collector for distributed tracing
+  otel-collector:
+    image: otel/opentelemetry-collector-k8s:latest
+    container_name: besttester-otel-collector
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml:ro
+    ports:
+      - "4317:4317"  # OTLP gRPC receiver
+      - "4318:4318"  # OTLP HTTP receiver
+      - "9411:9411"  # Zipkin receiver
+    networks:
+      - besttester
+    environment:
+      - TZ=UTC
+
+  # Jaeger for trace visualization
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: besttester-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Jaeger collector HTTP
+    networks:
+      - besttester
+    environment:
+      - TZ=UTC
+
+networks:
+  besttester:
+    driver: bridge
+
+volumes:
+  reports:
+    driver: local
+  allure-results:
+    driver: local
+  allure-report:
+    driver: local

@@ -55,6 +55,13 @@
     "jenkins:push-jobs": "bash scripts/push-single-test-job.sh",
     "typecheck": "tsc --noEmit",
     "security:audit": "ts-node scripts/security-audit.ts",
+    "docker:build": "docker build -t besttester:latest -t besttester:$npm_package_version .",
+    "docker:run": "docker run --rm -it -v $(pwd)/reports:/app/reports besttester:latest npm run test:smoke",
+    "docker:compose:up": "docker-compose up -d",
+    "docker:compose:down": "docker-compose down",
+    "docker:compose:logs": "docker-compose logs -f testsuite",
+    "docker:compose:test": "docker-compose up --abort-on-container-exit",
+    "docker:push": "docker push besttester:latest && docker push besttester:$npm_package_version",
     "prepare": "husky install"
   },
   "dependencies": {
